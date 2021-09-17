@@ -19,6 +19,7 @@ from datetime import datetime
 import re
 import cantools
 import can
+from pprint import pprint
 
 
 # @click.command()
@@ -32,7 +33,4 @@ import can
 #               help='set generated file destination. Default ./')
 
 print("Hello world")
-can_bus = can.interface.Bus('can1', bustype='socketcan')
-data = example_message.encode({'Temperature': 250.1, 'AverageRadius': 3.2, 'Enable': 1})
-message = can.Message(arbitration_id=0x1f0, data=data)
-can_bus.send(message)
+
