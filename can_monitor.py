@@ -32,3 +32,7 @@ import can
 #               help='set generated file destination. Default ./')
 
 print("Hello world")
+can_bus = can.interface.Bus('can1', bustype='socketcan')
+data = example_message.encode({'Temperature': 250.1, 'AverageRadius': 3.2, 'Enable': 1})
+message = can.Message(arbitration_id=example_message.frame_id, data=data)
+can_bus.send(message)
