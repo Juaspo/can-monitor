@@ -34,5 +34,5 @@ import can
 print("Hello world")
 can_bus = can.interface.Bus('can1', bustype='socketcan')
 data = example_message.encode({'Temperature': 250.1, 'AverageRadius': 3.2, 'Enable': 1})
-message = can.Message(arbitration_id=example_message.frame_id, data=data)
+message = can.Message(arbitration_id=0x1f0, data=data)
 can_bus.send(message)
