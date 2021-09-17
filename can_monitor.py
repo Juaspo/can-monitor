@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+#Script created to monitor canbus messages through picanDuo
+
 __all__     = []
 __version__ = 0.1
 __date__    = "2021-09-17"
@@ -22,5 +26,5 @@ import can
 @click.option('-i', '--input', 'ifile_path', help='input file for parsing')
 @click.option('-o', '--output', 'ofile_path', help='set generated file destination. Default ./')
 
-print("Hello World")
 
+print ("Hello World")
