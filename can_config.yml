@@ -1,1 +1,15 @@
 #Can config YAML file
+
+config_groups:
+  can_config:
+    can_send:
+      engine_speed:
+        name: 'EEC1'
+        canbus: 'can0'
+        value: 100.0
+
+    can_receive:
+      engine_speed:
+        name: 'EEC1'
+        show_arbid: True
+        user_info: "Engine speed shows"
