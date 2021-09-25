@@ -1,5 +1,7 @@
 #Can config YAML file
 
+dbc_file: './J1939-DBC/J1939_original.dbc'
+
 config_groups:
   can_config:
     can_send:
