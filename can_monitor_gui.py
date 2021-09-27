@@ -10,157 +10,162 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 
-top = Tk()
-top.minsize(width=250, height=150)
+class App:
+    def __init__(self, master):
+        # tabControl = ttk.Notebook(top)          # Create Tab Control
+        # tab1 = ttk.Frame(tabControl)            # Create a tab
+        # tabControl.add(tab1, text='WOL')        # Add the tab
+        # tabControl.pack(expand=1, fill="both")  # Pack to make visible
 
-top.title("Wake on lan")
+        #top.geometry("100x100")
+        self.main_frame0 = Frame(master)
+        self.main_frame0.pack()
 
-tabControl = ttk.Notebook(top)          # Create Tab Control
-tab1 = ttk.Frame(tabControl)            # Create a tab
-tabControl.add(tab1, text='WOL')      # Add the tab
-tabControl.pack(expand=1, fill="both")  # Pack to make visible
+        self.main_frame1 = Frame(self.main_frame0)
+        self.main_frame1.pack()
 
-#top.geometry("100x100")
-main_frame0 = Frame(tab1)
-main_frame0.pack()
+        main_frame1_1 = Frame(self.main_frame0, highlightbackground="black", highlightthickness=1, pady=5)
+        main_frame1_1.pack()
 
-main_frame1 = Frame(main_frame0)
-main_frame1.pack()
+        label = Label(self.main_frame1, pady=20, width=24, relief=RIDGE, text="WOL", wraplength=250, bg="white", fg="black", font="sans 12 bold")
+        label.pack()
 
-main_frame1_1 = Frame(main_frame0, highlightbackground="black", highlightthickness=1, pady=5)
-main_frame1_1.pack()
+        gen_label = Label(main_frame1_1, text="Broadcast address", fg="black", width = 17)
+        gen_label.grid(row = 0, column = 0)
+        general_ip_entry = Entry(main_frame1_1, width = 15)
+        general_ip_entry.grid(row = 0, column = 1)
 
-label = Label(main_frame1, pady=20, width=24, relief=RIDGE, text="WOL", wraplength=250, bg="white", fg="black", font="sans 12 bold")
-label.pack()
+        main_frame1_2 = Frame(main_frame1_1)
+        main_frame1_2.grid(row=1, column=0)
 
-gen_label = Label(main_frame1_1, text="Broadcast address", fg="black", width = 17)
-gen_label.grid(row = 0, column = 0)
-general_ip_entry = Entry(main_frame1_1, width = 15)
-general_ip_entry.grid(row = 0, column = 1)
+        repeat_label = Label(main_frame1_2, text="Repeat ping", fg="black", width = 10)
+        repeat_label.grid(row = 0, column = 1)
+        repeat_ping_entry = Entry(main_frame1_2, width = 3)
+        repeat_ping_entry.grid(row = 0, column = 0)
 
-main_frame1_2 = Frame(main_frame1_1)
-main_frame1_2.grid(row=1, column=0)
+        quit_after_wol_var=BooleanVar()
 
-repeat_label = Label(main_frame1_2, text="Repeat ping", fg="black", width = 10)
-repeat_label.grid(row = 0, column = 1)
-repeat_ping_entry = Entry(main_frame1_2, width = 3)
-repeat_ping_entry.grid(row = 0, column = 0)
+        quit_cb = Checkbutton(main_frame1_1, width = 12, text="Quit after", variable=quit_after_wol_var, onvalue=True, offvalue=False)
+        quit_cb.grid(row = 1, column = 1)
 
-quit_after_wol_var=BooleanVar()
+        #test_button = Button(main_frame1_1, text="test", command=debug_def)
+        #test_button.grid(row=2, column=0)
 
-quit_cb = Checkbutton(main_frame1_1, width = 12, text="Quit after", variable=quit_after_wol_var, onvalue=True, offvalue=False)
-quit_cb.grid(row = 1, column = 1)
+        self.frames = []
+        self.mac_labels = []
+        self.btn = []
+        self.ip_labels = []
 
-#test_button = Button(main_frame1_1, text="test", command=debug_def)
-#test_button.grid(row=2, column=0)
+        ############################################# Configurations
 
-frames = []
-mac_labels = []
-btn = []
-ip_labels = []
+        # tab3 = ttk.Frame(tabControl)            # Create a tab
+        # tabControl.add(tab3, text='Configure')      # Add the tab
+        # tabControl.pack(expand=1, fill="both")  # Pack to make visible
 
-############################################# Configurations
-
-tab3 = ttk.Frame(tabControl)            # Create a tab
-tabControl.add(tab3, text='Configure')      # Add the tab
-tabControl.pack(expand=1, fill="both")  # Pack to make visible
-
-conv_frame2 = Frame(tab3)
-conv_frame2.pack()
+        # conv_frame2 = Frame(tab3)
+        # conv_frame2.pack()
 
 
-################################## Functions
+        ################################## Functions
 
-def remove_buttons_and_labels():
-    global frames
-    global mac_labels
-    global btn
-    global ip_labels
+    def remove_buttons_and_labels(self):
+        global frames
+        global mac_labels
+        global btn
+        global ip_labels
 
-    for i in range(len(frames)):
-        frames[i].destroy()
-        mac_labels[i].destroy()
-        btn[i].destroy()
-        ip_labels[i].destroy()
+        for i in range(len(frames)):
+            frames[i].destroy()
+            mac_labels[i].destroy()
+            btn[i].destroy()
+            ip_labels[i].destroy()
 
-def quit_func():
-    print ("good bye")
-    top.destroy()
+    def quit_func(self):
+        print ("good bye")
+        top.destroy()
 
 
-def set_btn_labels():
-    '''
-    Functions for creating buttons and
-    text fields
-    '''
+    def set_btn_labels(self):
+        '''
+        Functions for creating buttons and
+        text fields
+        '''
 
-    # config_content = get_config()
-    config_content = {"t0": 0, "t1": 100, "t2": 200}
-    number_of_items = len(config_content)
-    # if "Config" in config_content:
-    #     number_of_items -= 1
-    create_buttons_and_labels(number_of_items)
+        # config_content = get_config()
+        config_content = {"t0": 0, "t1": 100, "t2": 200}
+        number_of_items = len(config_content)
+        # if "Config" in config_content:
+        #     number_of_items -= 1
+        self.create_buttons_and_labels(number_of_items)
 
-    n = 0
+        n = 0
 
-    for devices in config_content:
-        if devices != "Config":
+        for devices in config_content:
+            if devices != "Config":
+                try:
+                    # print("number:",n)
+                    self.btn[n].config(text = devices)
+                    mac = 23
+                    
+                    ip_addr=config_content[devices]
+                    ip_labels[n].config(text=ip_addr)
+
+                    n += 1
+                except KeyError:
+                    print("Error with key:", devices)
+        return
+
+    def create_buttons_and_labels(self, nr_to_create):
+        global frames
+        global mac_labels
+        global btn
+        global ip_labels
+
+        for i in range(nr_to_create):
+            print("create:",i)
+            self.frames.append(Frame(self.main_frame0, pady=5))
+            self.frames[-1].pack()
+
+            self.mac_labels.append(Label(self.frames[-1], text="MAC", fg="black", font="Verdana 10 bold"))
+            self.mac_labels[-1].grid(row = 0, column = 0)
+
+            self.btn.append(Button(self.frames[-1], text="No host", width = 15, command=lambda n=i: btn_action(n)))
+            self.btn[-1].grid(row = 0, column = 1)
+
+            self.ip_labels.append(Label(self.frames[-1], text="IP", fg="black"))
+            self.ip_labels[-1].grid(row = 1, column = 0)
+
+    def set_configuration(self):
+        # config_content = get_config()
+        config_content = "test"
+        if "test" in config_content:
             try:
-                # print("number:",n)
-                btn[n].config(text = devices)
-                mac = 23
-                
-                ip_addr=config_content[devices]
-                ip_labels[n].config(text=ip_addr)
+                general_ip_entry.delete(0, END)
+                general_ip_entry.insert(0, "general ip entry")
+                repeat_ping_entry.delete(0, END)
+                repeat_ping_entry.insert(0, "99")
 
-                n += 1
-            except KeyError:
-                print("Error with key:", devices)
-    return
+            except Exception as e:
+                print("config error:", e)
+                label.config(text=f"CFG error: {e}")
 
-def create_buttons_and_labels(nr_to_create):
-    global frames
-    global mac_labels
-    global btn
-    global ip_labels
-
-    for i in range(nr_to_create):
-        print("create:",i)
-        frames.append(Frame(main_frame0, pady=5))
-        frames[-1].pack()
-
-        mac_labels.append(Label(frames[-1], text="MAC", fg="black", font="Verdana 10 bold"))
-        mac_labels[-1].grid(row = 0, column = 0)
-
-        btn.append(Button(frames[-1], text="No host", width = 15, command=lambda n=i: btn_action(n)))
-        btn[-1].grid(row = 0, column = 1)
-
-        ip_labels.append(Label(frames[-1], text="IP", fg="black"))
-        ip_labels[-1].grid(row = 1, column = 0)
-
-def set_configuration():
-    # config_content = get_config()
-    config_content = "test"
-    if "test" in config_content:
-        try:
+        else:
             general_ip_entry.delete(0, END)
-            general_ip_entry.insert(0, "general ip entry")
-            repeat_ping_entry.delete(0, END)
-            repeat_ping_entry.insert(0, "99")
-
-        except Exception as e:
-            print("config error:", e)
-            label.config(text=f"CFG error: {e}")
-
-    else:
-        general_ip_entry.delete(0, END)
-        general_ip_entry.insert(0, "Bad config")
-        return False
+            general_ip_entry.insert(0, "Bad config")
+            return False
 
 def main(argv):
 
-    set_btn_labels()
-    set_configuration()
+    top = Tk()
+    top.minsize(width=250, height=150)
+    top.title("Can Monitor")
+
+    app = App(top)
+    app.set_btn_labels()
+    app.set_configuration()
+    
+    top.mainloop()
+
 
     # try:
     #     opts, args = getopt.getopt(argv, "hs:t:", ["help"])
@@ -186,4 +191,3 @@ def main(argv):
 if __name__ == '__main__':
     main(sys.argv[1:])
 
-top.mainloop()

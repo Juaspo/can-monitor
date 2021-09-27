@@ -23,6 +23,8 @@ from pprint import pprint
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
+import can_m_gui
+
 
 @click.command()
 @click.option('-c', '--cfg_file', 'cfg_file', default='can_config.yml',
@@ -39,6 +41,10 @@ def main(cfg_file: str, logging_level: str, dbc_file: str, ofile_path: str) -> i
     logger = create_logger(logging_level)
     logger.info("Logging level set to: %s", logging_level)
     
+    can_gui = can_m_gui(root)
+    can_gui.mainloop()
+    can_gui.destroy()
+
     cfg_content = get_config(logger, cfg_file)
 
     if not cfg_content:
