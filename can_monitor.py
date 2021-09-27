@@ -40,10 +40,14 @@ import can_m_gui
 def main(cfg_file: str, logging_level: str, dbc_file: str, ofile_path: str) -> int:
     logger = create_logger(logging_level)
     logger.info("Logging level set to: %s", logging_level)
-    
-    can_gui = can_m_gui(root)
+
+    can_gui = can_m_gui.MainApplication()
     can_gui.mainloop()
-    can_gui.destroy()
+    # can_gui.destroy()
+
+    data_val = {"address": "7AF#", "value": "Success! New value"}
+
+    can_gui.receive_widgets["widdy1"].update_label("canaddr", "sub", data_val)
 
     cfg_content = get_config(logger, cfg_file)
 
@@ -85,7 +89,6 @@ def get_db_object(logger: Logger, dbc_file_path: str):
     except FileNotFoundError as e:
         logger.error(f"DBC File not found: %s", e)
     return None
-
 
 
 def decode_can_msg(logger: Logger, arb_id: str, can_data: str, db: object = None, dbc_file_path: str = None ) -> dict:
