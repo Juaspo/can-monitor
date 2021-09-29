@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Others
+dbc_input.dbc
+motohawk.dbc
+
