@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Use Tkinter for python 2, tkinter for python 3
 import tkinter as tk
 import logging
@@ -26,18 +28,21 @@ class MainApplication(tk.Tk):
         container.grid_columnconfigure(1, weight=3)
         container.grid_columnconfigure(2, weight=2)
 
-        self.frames = {} # dict of pages
-        self.label_frames = {} # labellist
+        self.pages = {} # dict of pages
+        # for F in (StartPage, PageOne): # Add pages to dict here
+        #     page = F(container, self)
+        #     self.pages[F] = page
+        #     page.grid(row=0, column=0, sticky="nsew")
+        #     # self.show_frame(F)
+
+        page = StartPage(container, self)
+        page.grid(row=0, column=0, sticky="nsew")
+        self.pages["StartPage"] = page
+
+        ######## Receive widgets
         self.receive_widgets = {}
-
-
-        for F in (StartPage, PageOne): # Add pages to dict here
-            frame = F(container, self)
-            self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-            # self.show_frame(F)
-
-        self.receive_widget_frame = tk.Frame(container)
+        self.label_frames = {} # labellist
+        self.receive_widget_frame = tk.Frame(container, bg="pink")
         self.receive_widget_frame.grid(row=0, column=1, sticky="nsew")
 
         if cfg_file is not None:
@@ -46,6 +51,7 @@ class MainApplication(tk.Tk):
                 self.receive_widgets[k] = frame
                 frame.pack()
                 # frame.grid(row=n, column=0, sticky="nsew")
+            print(self.label_frames)
 
     def show_frame(self, cont):
         '''
@@ -58,22 +64,16 @@ class MainApplication(tk.Tk):
             cont, frame to raise
         '''
 
-        frame = self.frames[cont]
-        frame.tkraise()
+        page = self.pages[cont]
+        page.tkraise()
 
     def updated_text(self, text):
         # label = self.receive_widgets["widdy1"].labels_dict["canaddr"]["title"]
         # label.set(text)
         pass
 
-    def create_receive_widgets(logger, cfg):
-        for post in cfg:
-            pass
 
-
-
-
-########################################## Example pages ##########################################
+########################################## pages/widgets ##########################################
 
 ## For creating a new page copy this class and modify
 class StartPage(tk.Frame): # Page example 1
@@ -85,16 +85,36 @@ class StartPage(tk.Frame): # Page example 1
     '''
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, background="green") # create a local frame
-        self.label0 = tk.Label(self, text="Hello World", font=LARGE_FONT)
-        self.label0.pack(pady=10,padx=10)
 
-        # Creating a label on parent frame (container)
-        label1 = tk.Label(parent, text="Created on parent", font=LARGE_FONT)
-        label1.grid(row=1, column=0) # since parent (container) is grid, pack cannot be used
+        id_frame = tk.Frame(self)
+        id_frame.grid_rowconfigure(0, weight=1)
+        id_frame.grid_rowconfigure(1, weight=1)
+        id_frame.grid_columnconfigure(0, weight=1)
+        id_frame.grid_columnconfigure(1, weight=10)
 
-        btn = tk.Button(self, text="Go2", command=lambda: controller.show_frame(PageOne))
-        btn.pack()
+        id_frame.pack()
+        id_label = tk.Label(id_frame, text="CAN ID", font=LARGE_FONT)
+        id_label.grid(row=0, column=0, sticky="w")
+        can_id_entry = tk.Entry(id_frame, width=10)
+        can_id_entry.grid(row=0, column=1, sticky="w")
 
+        id_frame.pack()
+        name_label = tk.Label(id_frame, text="CAN Name", font=LARGE_FONT)
+        name_label.grid(row=1, column=0, sticky="w")
+        can_name_entry = tk.Entry(id_frame, width=20)
+        can_name_entry.grid(row=1, column=1, sticky="w")
+
+        label = tk.Label(id_frame, text="CAN Data", font=LARGE_FONT)
+        label.grid(row=2, column=0, sticky="w")
+        can_entry = tk.Entry(id_frame, width=20)
+        can_entry.grid(row=2, column=1, sticky="w")
+
+        btn_frame = tk.Frame(self)
+        btn_frame.pack()
+        btn0 = tk.Button(btn_frame, text="send", command=lambda: controller.show_frame(PageOne))
+        btn0.grid(row=0, column=0)
+        btn1 = tk.Button(btn_frame, text="next", command=lambda: controller.show_frame(PageOne))
+        btn1.grid(row=0, column=1)
 
 class PageOne(tk.Frame): # Page example 2
     def __init__(self, parent, controller):
@@ -102,7 +122,7 @@ class PageOne(tk.Frame): # Page example 2
         label = tk.Label(self, text="Hello Earth", font=LARGE_FONT)
         label.pack(pady=10,padx=10)
 
-        btn = tk.Button(self, text="Go1", command=lambda: controller.updated_text("mamma"))
+        btn = tk.Button(self, text="Prev", command=lambda: controller.show_frame(StartPage))
         btn.pack()
 
 
@@ -121,11 +141,9 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
             labels_to_build: dict
 
         '''
-
-        print(widget_name)
         widget_name = tk.Label(self, text=widget_name, font=LARGE_FONT)
         widget_name.pack(pady=5, padx=5)
-        grid_frame = tk.Frame(self)
+        grid_frame = tk.Frame(self, bg="light green")
         grid_frame.pack()
 
         label_titles = {
