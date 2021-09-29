@@ -41,23 +41,47 @@ def main(cfg_file: str, logging_level: str, dbc_file: str, ofile_path: str) -> i
     logger = create_logger(logging_level)
     logger.info("Logging level set to: %s", logging_level)
 
-    can_gui = can_m_gui.MainApplication()
-    can_gui.mainloop()
-    # can_gui.destroy()
-
-    data_val = {"address": "7AF#", "value": "Success! New value"}
-
-    can_gui.receive_widgets["widdy1"].update_label("canaddr", "sub", data_val)
-
     cfg_content = get_config(logger, cfg_file)
 
     if not cfg_content:
         logger.error("missing config file, exiting...")
         sys.exit(os.EX_CONFIG)
 
-    print(cfg_content)
+    can_receive_cfg = deep_search(cfg_content, "can_receive")
+
+    logger.debug("receive cfg_file content:\n%s", can_receive_cfg)
+
+    can_gui = can_m_gui.MainApplication(logger, can_receive_cfg)
+    can_gui.mainloop()
+    # can_gui.destroy()
+    data_val = {"address": "7AF#", "value": "Success! New value"}
+
+    # can_gui.receive_widgets["widdy1"].update_label("canaddr", "sub", data_val)
 
     return 0
+
+
+def match_can_id(obj, can_id):
+    pass
+
+
+def deep_search(obj, key):
+    '''
+    Search multiple levels of a dicts and return found key values
+
+    input:
+        obj: dict - Dictionary to search through
+        key: str - Matching key string value to look for
+    return:
+        item: dict - Value of matching dict key
+    '''
+
+    if key in obj: return obj[key]
+    for k, v in obj.items():
+        if isinstance(v,dict):
+            item = deep_search(v, key)
+            if item is not None:
+                return item
 
 def send_can(arb_id: str, can_data: str):
     '''

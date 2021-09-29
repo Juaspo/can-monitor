@@ -12,6 +12,17 @@ config_groups:
 
     can_receive:
       engine_speed:
-        name: 'EEC1'
-        show_arbid: True
-        user_info: "Engine speed shows"
+        can_name: 'EEC1'
+        can_id: '0x00'
+        can_data: '0x9988776655'
+        full_can: True
+        show_arbid: "True"
+        can_info: "Engine speed shows"
+
+      engine_temp:
+        can_name: 'EET1'
+        can_id: '0x00'
+        can_data: '0x9988776655'
+        full_can: True
+        show_arbid: "True"
+        can_info: "Temp of engine"

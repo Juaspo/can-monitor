@@ -1,5 +1,8 @@
 # Use Tkinter for python 2, tkinter for python 3
 import tkinter as tk
+import logging
+from logging import Logger
+import sys
 
 LARGE_FONT = ("Consolas", 12)
 MEDIUM_FONT = ("Consolas", 10)
@@ -8,7 +11,7 @@ SMALL_FONT = ("Verdana", 8)
 
 class MainApplication(tk.Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, logger, cfg_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         container = tk.Frame(self, background = "red")
         container.pack(side="top", fill="both", expand=True)
@@ -34,16 +37,15 @@ class MainApplication(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
             # self.show_frame(F)
 
+        self.receive_widget_frame = tk.Frame(container)
+        self.receive_widget_frame.grid(row=0, column=1, sticky="nsew")
 
-        frame = CanReceiveWidget(container, self)
-        self.receive_widgets["widdy1"] = frame
-        frame.grid(row=0, column=1, sticky="nsew")
-
-
-        for X in range(3):
-            frame = LabelTwo(container, self, 3)
-            frame.grid(row=X, column=2, sticky="nsew")
-
+        if cfg_file is not None:
+            for k in cfg_file:
+                frame = CanReceiveWidget(self.receive_widget_frame, self, logger, k, cfg_file[k])
+                self.receive_widgets[k] = frame
+                frame.pack()
+                # frame.grid(row=n, column=0, sticky="nsew")
 
     def show_frame(self, cont):
         '''
@@ -59,7 +61,17 @@ class MainApplication(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    
+    def updated_text(self, text):
+        # label = self.receive_widgets["widdy1"].labels_dict["canaddr"]["title"]
+        # label.set(text)
+        pass
+
+    def create_receive_widgets(logger, cfg):
+        for post in cfg:
+            pass
+
+
+
 
 ########################################## Example pages ##########################################
 
@@ -90,40 +102,64 @@ class PageOne(tk.Frame): # Page example 2
         label = tk.Label(self, text="Hello Earth", font=LARGE_FONT)
         label.pack(pady=10,padx=10)
 
-        btn = tk.Button(self, text="Go1", command=lambda: controller.show_frame(StartPage))
+        btn = tk.Button(self, text="Go1", command=lambda: controller.updated_text("mamma"))
         btn.pack()
 
 
 class CanReceiveWidget(tk.Frame): # Example to create multiple labels
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, background="light blue")
-        self.label_var=tk.StringVar()
+    def __init__(self, parent, controller, logger, widget_name="ReceiveWidget", labels_to_build=None):
+        tk.Frame.__init__(self, parent, background="light blue", borderwidth=1)
 
-        labels_to_build={
-                         "canaddr": {"title": "CAN addr", "value": "0X00"},
-                         "candata": {"title": "CAN data", "value": "0X998877665544332211"},
-                         "fullcan": {"title": "CAN full", "value": "0X00#998877665544332211"},
+        '''
+        create widget for can data receieve.
+
+        input:
+            parent: frame
+            logger: Logger
+            controller: Parent object
+            widget_name: str
+            labels_to_build: dict
+
+        '''
+
+        print(widget_name)
+        widget_name = tk.Label(self, text=widget_name, font=LARGE_FONT)
+        widget_name.pack(pady=5, padx=5)
+        grid_frame = tk.Frame(self)
+        grid_frame.pack()
+
+        label_titles = {
+                        "can_name": "CAN name:",
+                        "can_id": "CAN ID:",
+                        "can_data": "CAN data:",
+                        "can_full": "CAN full:",
+                        "can_info": "CAN info"
         }
+
         self.labels_dict = {}
         lbl_dict = {}
         grid_r = grid_c = 0
+        cfg_keys = label_titles.keys()
 
-        for lbls in labels_to_build:
+        logger.debug("widget build data %s", labels_to_build)
 
-            for lb_content in labels_to_build[lbls]:
-                # print("lbls: ", lbls, "\nlb_content: ", lb_content)
-                ###################/// why not working!!??
-                self.label_var.set(str(labels_to_build[lbls][lb_content]))
-                label = tk.Label(self, text=self.label_var, font=LARGE_FONT)
-                
+        for lbl in labels_to_build:
+            if lbl in cfg_keys:
+                # print("lbl: ", lbl, "\nlb_content: ", lb_content)
+                label_title_var = tk.StringVar()
+                label_title_var.set(label_titles[lbl])
+                label = tk.Label(grid_frame, textvariable=label_title_var, font=MEDIUM_FONT)
+                label.grid(row=grid_r, column=0, sticky="w")
+                lbl_dict["title"] = label_title_var
 
-                label.grid(row=grid_r, column=grid_c, sticky="w")
-                lbl_dict[lb_content] = label
-                grid_c += 1
+                label_value_var = tk.StringVar()
+                label_value_var.set(labels_to_build[lbl])
+                label = tk.Label(grid_frame, textvariable=label_value_var, font=MEDIUM_FONT)
+                label.grid(row=grid_r, column=1, sticky="w")
+                lbl_dict["value"] = label_value_var
+                grid_r += 1
 
-            self.labels_dict[lbls] = lbl_dict
-            grid_r += 1
-            grid_c = 0
+        self.labels_dict[lbl] = lbl_dict
 
 
     def update_label(self, label, sub, data_val):
@@ -141,11 +177,39 @@ class LabelTwo(tk.Frame): # Example to create multiple labels (grey)
     def __init__(self, parent, controller, nr_of_labels):
         tk.Frame.__init__(self, parent, background="grey")
         for i in range(nr_of_labels):
-            print("create nr", i)
             label = tk.Label(self, text="Created in frame LabelTwo", font=LARGE_FONT)
             label.pack()
 
+def create_logger(logging_level: str) -> Logger:
+    '''
+    Set up logger for this script
+    input:
+        logging_level :string
+    return:
+        logger :Logger
+    '''
+    logger = logging.getLogger(__name__)
+    logger.setLevel(getattr(logging, logging_level.upper(), 10))
+    formatter = logging.Formatter('%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                                  datefmt='%Y-%m-%d:%H:%M:%S')
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(formatter)
+
+    logger.addHandler(ch)
+    return logger
+
 if __name__ == '__main__':
     # Run app if started as main
-    app = MainApplication()
+    cfg_file = {"Test_data": {
+                              "can_name": "EEC1",
+                              "can_id": "0X00",
+                              "can_data": "0X998877665544332211",
+                              "can_full": "0X00#998877665544332211",
+                              }
+                }
+    logging_level = "DEBUG"
+    logger = create_logger(logging_level)
+    logger.info("Logging level set to: %s", logging_level)
+
+    app = MainApplication(logger, cfg_file)
     app.mainloop()
