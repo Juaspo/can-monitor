@@ -13,7 +13,7 @@ SMALL_FONT = ("Verdana", 8)
 
 class MainApplication(tk.Tk):
 
-    def __init__(self, logger, cfg_file, *args, **kwargs):
+    def __init__(self, logger, can_model, cfg_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         container = tk.Frame(self, background = "red")
         container.pack(side="top", fill="both", expand=True)
@@ -35,7 +35,7 @@ class MainApplication(tk.Tk):
         #     page.grid(row=0, column=0, sticky="nsew")
         #     # self.show_frame(F)
 
-        page = StartPage(container, self)
+        page = StartPage(container, self, logger, can_model)
         page.grid(row=0, column=0, sticky="nsew")
         self.pages["StartPage"] = page
 
@@ -83,7 +83,7 @@ class StartPage(tk.Frame): # Page example 1
     self. EX: tk.Label(self). Parent of this page is whatever is passed
     which in this case is container, see line: frame = F(container, self).
     '''
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, logger, can_model):
         tk.Frame.__init__(self, parent, background="green") # create a local frame
 
         id_frame = tk.Frame(self)
@@ -95,14 +95,14 @@ class StartPage(tk.Frame): # Page example 1
         id_frame.pack()
         id_label = tk.Label(id_frame, text="CAN ID", font=LARGE_FONT)
         id_label.grid(row=0, column=0, sticky="w")
-        can_id_entry = tk.Entry(id_frame, width=10)
-        can_id_entry.grid(row=0, column=1, sticky="w")
+        self.can_id_entry = tk.Entry(id_frame, width=10)
+        self.can_id_entry.grid(row=0, column=1, sticky="w")
 
         id_frame.pack()
         name_label = tk.Label(id_frame, text="CAN Name", font=LARGE_FONT)
         name_label.grid(row=1, column=0, sticky="w")
-        can_name_entry = tk.Entry(id_frame, width=20)
-        can_name_entry.grid(row=1, column=1, sticky="w")
+        self.can_name_entry = tk.Entry(id_frame, width=20)
+        self.can_name_entry.grid(row=1, column=1, sticky="w")
 
         label = tk.Label(id_frame, text="CAN Data", font=LARGE_FONT)
         label.grid(row=2, column=0, sticky="w")
@@ -111,10 +111,18 @@ class StartPage(tk.Frame): # Page example 1
 
         btn_frame = tk.Frame(self)
         btn_frame.pack()
-        btn0 = tk.Button(btn_frame, text="send", command=lambda: controller.show_frame(PageOne))
+        btn0 = tk.Button(btn_frame, text="send", command=lambda: can_model.fetch_entry_data(logger))
         btn0.grid(row=0, column=0)
-        btn1 = tk.Button(btn_frame, text="next", command=lambda: controller.show_frame(PageOne))
+        btn1 = tk.Button(btn_frame, text="next", command=lambda: can_model.test_function(logger, "PageOne"))
         btn1.grid(row=0, column=1)
+
+    def get_entry_data(self):
+        print("inside get_entry_data")
+        entry_data = {
+                      "can_id_entry": self.can_id_entry.get(),
+                      "can_name_entry": self. can_name_entry.get()
+                      }
+        return entry_data
 
 class PageOne(tk.Frame): # Page example 2
     def __init__(self, parent, controller):
