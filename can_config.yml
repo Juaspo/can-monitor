@@ -1,25 +1,26 @@
 #Can config YAML file
 
-dbc_file: './J1939-DBC/J1939_original.dbc'
+# dbc_file: './J1939-DBC/J1939_original.dbc'
+dbc_file: './J1939-DBC/J1939_demo.dbc'
 
 config_groups:
   can_config:
     can_send:
-      engine_speed:
+      EngineSpeed:
         name: 'EEC1'
         canbus: 'can0'
         value: 100.0
 
     can_receive:
-      engine_speed:
+      EngineSpeed:
         can_name: 'EEC1'
-        can_id: '0x00'
+        can_id: '0CF004FE'
         can_data: '0x9988776655'
         full_can: True
         show_arbid: "True"
         can_info: "Engine speed shows"
 
-      engine_temp:
+      EngineTemp:
         can_name: 'EET1'
         can_id: '0x00'
         can_data: '0x9988776655'

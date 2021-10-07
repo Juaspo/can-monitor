@@ -39,7 +39,6 @@ class MainApplication(tk.Toplevel):
         page = StartPage(container, self, logger)
         page.grid(row=0, column=0, sticky="nsew")
         self.pages["StartPage"] = page
-        print(page)
         #self.pages["StartPage"].can_id_entry.insert('end', "Money") 
 
         ######## Receive widgets
@@ -54,7 +53,6 @@ class MainApplication(tk.Toplevel):
                 self.receive_widgets[k] = frame
                 frame.pack()
                 # frame.grid(row=n, column=0, sticky="nsew")
-            print(self.label_frames)
 
         # data = {"widget": "enginge_speed", "can_data": "apple", "can_info": "pear"}
         # self.receive_widgets["engine_speed"].update_values(logger, data)
@@ -103,7 +101,6 @@ class StartPage(tk.Frame): # Page example 1
         self.id_label.grid(row=0, column=0, sticky="w")
         self.can_id_entry = tk.Entry(self.id_frame, width=10)
         self.can_id_entry.grid(row=0, column=1, sticky="w")
-        print(self.can_id_entry)
 
         self.name_label = tk.Label(self.id_frame, text="CAN Name", font=LARGE_FONT)
         self.name_label.grid(row=1, column=0, sticky="w")
@@ -184,33 +181,33 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
 
         for lbl in labels_to_build:
             if lbl in cfg_keys:
-                self._temp_dict = {}
-                # print("lbl: ", lbl, "\nlb_content: ", lb_content)
+                _temp_dict = {}
                 label_title_var = tk.StringVar()
                 label_title_var.set(label_titles[lbl])
                 label = tk.Label(grid_frame, textvariable=label_title_var, font=MEDIUM_FONT)
                 label.grid(row=grid_r, column=0, sticky="w")
-                self._temp_dict["title"] = label_title_var
+                _temp_dict["title"] = label_title_var
 
-                self.label_value_var = tk.StringVar()
-                self.label_value_var.set(labels_to_build[lbl])
-                label = tk.Label(grid_frame, textvariable=self.label_value_var, font=MEDIUM_FONT)
+                label_value_var = tk.StringVar()
+                label_value_var.set(labels_to_build[lbl])
+                label = tk.Label(grid_frame, textvariable=label_value_var, font=MEDIUM_FONT)
                 label.grid(row=grid_r, column=1, sticky="w")
-                self._temp_dict["value"] = self.label_value_var
+                _temp_dict["value"] = label_value_var
                 logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
                 grid_r += 1
 
-                self.labels_entries[lbl] = self._temp_dict
+                self.labels_entries[lbl] = _temp_dict
 
     def update_values(self, logger, data_values):
         self.labels_entries
         keys = []
+
         for k in self.labels_entries:
             keys.append(k)
-        print("Simon says", self.labels_entries)
-        # print (self.labels_entries)
+
+        logger.debug("update values - keys: %s # data_values: %s # labels_entries: %s",
+                     keys, data_values, self.labels_entries)
         for entry in data_values:
-            print ("entry:", entry)
             if entry in keys:
                 logger.debug("found match on '%s' with value '%s'", entry, data_values[entry])
                 self.labels_entries[entry]["value"].set(data_values[entry])
@@ -224,8 +221,6 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
         print("In update label")
         for val in data_val:
             if val == "data":
-                pass
-                print("Widdy frame:", frame)
                 frame["value"].set(data_val[val])
 
 

@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 import yaml
+import re
+import cantools
+import can
+import logging
+from logging import Logger
+import os.path
 
 class ApplicationModel():
     def __init__(self, logger, *args, **kwargs):
         pass
 
-    def get_config(self, logger, cfg_file: str) -> dict:
+    def get_config(self, logger, cfg_file: str, cfg_level="config_groups") -> dict:
         '''
         Fetch YAML configuration
         reads and returns YAML configuration
@@ -17,8 +23,8 @@ class ApplicationModel():
         try:
             with open(cfg_file, 'r') as file:
                 cfg = yaml.safe_load(file)
-                logger.debug("yaml content: %s", cfg)
-                return cfg["config_groups"]
+                # logger.debug("yaml content: %s", cfg)
+                return cfg[cfg_level]
         except yaml.YAMLError as e:
             logger.error(f"YAML file error: {e}")
         except FileNotFoundError as e:
@@ -50,12 +56,21 @@ class ApplicationModel():
 
 class CanApplication():
     def __init__(self, logger, *args, **kwargs):
-        pass
+        self.canbus = None
+        self.db = None
 
-    def test_function(self, logger, message):
-        logger.info("Writing log with:%s", message)
-        test_can = {"can_id": "001", "can_message": "0#00112233"}
-        return test_can
+    def set_canbus(self, bus):
+        self.canbus = str(bus)
+
+    def get_canbus(self):
+        return self.canbus
+
+    def set_db(self, logger, db_path):
+        if(os.path.exists(db_path)):
+            self.db = cantools.database.load_file(db_path)
+            logger.debug("updated db with '%s'", db_path)
+        else:
+            logger.error("no db file found at '%s'", db_path)
 
     def send_can(self, arb_id: str, can_data: str):
         '''
@@ -65,16 +80,15 @@ class CanApplication():
         return:
             int
         '''
-        print("Hello world")
-        db = cantools.database.load_file('./J1939-DBC/J1939_demo.dbc')
+        # db = cantools.database.load_file('./J1939-DBC/J1939_demo.dbc')
         print("#### ")
-        msg_2182 = db.get_message_by_name('EEC1')
+        msg_2182 = self.db.get_message_by_name('EEC1')
 
         #print("printing msg 2192\n", msg_2182.signals)
-        can_bus = can.interface.Bus('can0', bustype='socketcan')
+        can_bus = can.interface.Bus(str(self.canbus), bustype='socketcan')
 
-        data_2182 = msg_2182.encode({'EngineSpeed':10.0})
-        msg_send = create_msg(msg_2182.frame_id,data_2182)
+        data_2182 = msg_2182.encode({'EngineSpeed':50.0})
+        msg_send = self.create_msg(msg_2182.frame_id,data_2182)
         task_2182 = can_bus.send(msg_send)
 
         return 0
