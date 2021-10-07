@@ -108,3 +108,9 @@ class CanApplication():
 
     def create_msg(self, frame_id, data_param):
         return can.Message(arbitration_id=frame_id, data=data_param)
+
+    def add_view_callback(self, func):
+        self.callback = func
+
+    def do_view_callback(self, data):
+        func(data)

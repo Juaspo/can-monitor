@@ -11,10 +11,11 @@ MEDIUM_FONT = ("Consolas", 10)
 SMALL_FONT = ("Verdana", 8)
 
 
-class MainApplication(tk.Tk):
-
-    def __init__(self, logger, can_model, cfg_file, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
+class MainApplication(tk.Toplevel):
+    def __init__(self, master, logger, cfg_file, *args, **kwargs):
+        tk.Toplevel.__init__(self, master)
+        # use protocol to catch window close and destroy application.
+        self.protocol('WM_DELETE_WINDOW', self.master.destroy)
         container = tk.Frame(self, background = "red")
         container.pack(side="top", fill="both", expand=True)
         
@@ -35,9 +36,11 @@ class MainApplication(tk.Tk):
         #     page.grid(row=0, column=0, sticky="nsew")
         #     # self.show_frame(F)
 
-        page = StartPage(container, self, logger, can_model)
+        page = StartPage(container, self, logger)
         page.grid(row=0, column=0, sticky="nsew")
         self.pages["StartPage"] = page
+        print(page)
+        #self.pages["StartPage"].can_id_entry.insert('end', "Money") 
 
         ######## Receive widgets
         self.receive_widgets = {}
@@ -52,6 +55,9 @@ class MainApplication(tk.Tk):
                 frame.pack()
                 # frame.grid(row=n, column=0, sticky="nsew")
             print(self.label_frames)
+
+        # data = {"widget": "enginge_speed", "can_data": "apple", "can_info": "pear"}
+        # self.receive_widgets["engine_speed"].update_values(logger, data)
 
     def show_frame(self, cont):
         '''
@@ -83,38 +89,45 @@ class StartPage(tk.Frame): # Page example 1
     self. EX: tk.Label(self). Parent of this page is whatever is passed
     which in this case is container, see line: frame = F(container, self).
     '''
-    def __init__(self, parent, controller, logger, can_model):
+    def __init__(self, parent, controller, logger):
         tk.Frame.__init__(self, parent, background="green") # create a local frame
 
-        id_frame = tk.Frame(self)
-        id_frame.grid_rowconfigure(0, weight=1)
-        id_frame.grid_rowconfigure(1, weight=1)
-        id_frame.grid_columnconfigure(0, weight=1)
-        id_frame.grid_columnconfigure(1, weight=10)
+        self.id_frame = tk.Frame(self)
+        self.id_frame.grid_rowconfigure(0, weight=1)
+        self.id_frame.grid_rowconfigure(1, weight=1)
+        self.id_frame.grid_columnconfigure(0, weight=1)
+        self.id_frame.grid_columnconfigure(1, weight=10)
 
-        id_frame.pack()
-        id_label = tk.Label(id_frame, text="CAN ID", font=LARGE_FONT)
-        id_label.grid(row=0, column=0, sticky="w")
-        self.can_id_entry = tk.Entry(id_frame, width=10)
+        self.id_frame.pack()
+        self.id_label = tk.Label(self.id_frame, text="CAN ID", font=LARGE_FONT)
+        self.id_label.grid(row=0, column=0, sticky="w")
+        self.can_id_entry = tk.Entry(self.id_frame, width=10)
         self.can_id_entry.grid(row=0, column=1, sticky="w")
+        print(self.can_id_entry)
 
-        id_frame.pack()
-        name_label = tk.Label(id_frame, text="CAN Name", font=LARGE_FONT)
-        name_label.grid(row=1, column=0, sticky="w")
-        self.can_name_entry = tk.Entry(id_frame, width=20)
+        self.name_label = tk.Label(self.id_frame, text="CAN Name", font=LARGE_FONT)
+        self.name_label.grid(row=1, column=0, sticky="w")
+        self.can_name_entry = tk.Entry(self.id_frame, width=20)
         self.can_name_entry.grid(row=1, column=1, sticky="w")
 
-        label = tk.Label(id_frame, text="CAN Data", font=LARGE_FONT)
-        label.grid(row=2, column=0, sticky="w")
-        can_entry = tk.Entry(id_frame, width=20)
-        can_entry.grid(row=2, column=1, sticky="w")
+        self.label = tk.Label(self.id_frame, text="CAN Data", font=LARGE_FONT)
+        self.label.grid(row=2, column=0, sticky="w")
+        self.can_entry = tk.Entry(self.id_frame, width=20)
+        self.can_entry.grid(row=2, column=1, sticky="w")
 
-        btn_frame = tk.Frame(self)
-        btn_frame.pack()
-        btn0 = tk.Button(btn_frame, text="send", command=lambda: can_model.fetch_entry_data(logger))
-        btn0.grid(row=0, column=0)
-        btn1 = tk.Button(btn_frame, text="next", command=lambda: can_model.test_function(logger, "PageOne"))
-        btn1.grid(row=0, column=1)
+        self.btn_frame = tk.Frame(self)
+        self.btn_frame.pack()
+        self.btn0 = tk.Button(self.btn_frame, text="send")
+        self.btn0.grid(row=0, column=0)
+        self.btn1 = tk.Button(self.btn_frame, text="next")
+        self.btn1.grid(row=0, column=1)
+
+
+    def set_entry(self, text):
+        print("in set entry")
+        self.can_id_entry.delete(0,'end')
+        self.can_id_entry.insert('end', text)     
+
 
     def get_entry_data(self):
         print("inside get_entry_data")
@@ -149,8 +162,8 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
             labels_to_build: dict
 
         '''
-        widget_name = tk.Label(self, text=widget_name, font=LARGE_FONT)
-        widget_name.pack(pady=5, padx=5)
+        self.widget_name = tk.Label(self, text=widget_name, font=LARGE_FONT)
+        self.widget_name.pack(pady=5, padx=5)
         grid_frame = tk.Frame(self, bg="light green")
         grid_frame.pack()
 
@@ -159,11 +172,11 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
                         "can_id": "CAN ID:",
                         "can_data": "CAN data:",
                         "can_full": "CAN full:",
-                        "can_info": "CAN info"
+                        "can_info": "CAN info:"
         }
 
-        self.labels_dict = {}
-        lbl_dict = {}
+        self.labels_entries = {}
+        
         grid_r = grid_c = 0
         cfg_keys = label_titles.keys()
 
@@ -171,22 +184,39 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
 
         for lbl in labels_to_build:
             if lbl in cfg_keys:
+                self._temp_dict = {}
                 # print("lbl: ", lbl, "\nlb_content: ", lb_content)
                 label_title_var = tk.StringVar()
                 label_title_var.set(label_titles[lbl])
                 label = tk.Label(grid_frame, textvariable=label_title_var, font=MEDIUM_FONT)
                 label.grid(row=grid_r, column=0, sticky="w")
-                lbl_dict["title"] = label_title_var
+                self._temp_dict["title"] = label_title_var
 
-                label_value_var = tk.StringVar()
-                label_value_var.set(labels_to_build[lbl])
-                label = tk.Label(grid_frame, textvariable=label_value_var, font=MEDIUM_FONT)
+                self.label_value_var = tk.StringVar()
+                self.label_value_var.set(labels_to_build[lbl])
+                label = tk.Label(grid_frame, textvariable=self.label_value_var, font=MEDIUM_FONT)
                 label.grid(row=grid_r, column=1, sticky="w")
-                lbl_dict["value"] = label_value_var
+                self._temp_dict["value"] = self.label_value_var
+                logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
                 grid_r += 1
 
-        self.labels_dict[lbl] = lbl_dict
+                self.labels_entries[lbl] = self._temp_dict
 
+    def update_values(self, logger, data_values):
+        self.labels_entries
+        keys = []
+        for k in self.labels_entries:
+            keys.append(k)
+        print("Simon says", self.labels_entries)
+        # print (self.labels_entries)
+        for entry in data_values:
+            print ("entry:", entry)
+            if entry in keys:
+                logger.debug("found match on '%s' with value '%s'", entry, data_values[entry])
+                self.labels_entries[entry]["value"].set(data_values[entry])
+            else:
+                logger.warning("[widget:%s] no '%s' object found to update", 
+                               self.widget_name.cget("text"), entry)
 
     def update_label(self, label, sub, data_val):
         frame = self.labels_dict[label]
