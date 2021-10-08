@@ -67,7 +67,8 @@ class CanController():
         self.logger = logger
         self.app_model = can_model.ApplicationModel(self, logger)
         self.can_control = can_model.CanApplication(self, logger)
-        self.can_control.set_can_port("can0")
+        self.can_control.set_can_channel("can0")
+        self.threads = {}
 
         cfg_content = self.app_model.get_config(logger, cfg_file)
         if not cfg_content:
@@ -86,11 +87,28 @@ class CanController():
         widgets = self.can_gui.receive_widgets
         start_page = self.can_gui.pages["StartPage"]
 
-        start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
-        start_page.btn1.config(command = lambda: widgets["EngineSpeed"].update_values(logger, data_val))
+        # x = threading.Thread(target=self.can_read, args=("CanMonitorThread", logger))
 
-        x = threading.Thread(target=self.can_read, args=("CanMonitorThread", logger))
-        x.start()
+        start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
+        start_page.btn1.config(command = lambda: self.start_thread(logger, "CanMonitorThread"))
+
+    def start_thread(self, logger, thread):
+        create_new_thread = True
+
+        if self.threads.get(thread):
+            if self.threads[thread].isAlive():
+                create_new_thread = False
+                logger.debug("%s thread is already running", thread)
+                # return threads[thread]
+
+        if create_new_thread:
+            x_thread = threading.Thread(target=self.can_read, args=(thread, logger))
+            x_thread.start()
+            self.threads[thread] = x_thread
+            logger.debug("New thread '%s' created and started", thread)
+            # return x_thread
+        
+
 
     def can_read(self, name, logger):
         logger.debug("%s is running can monitor", name)

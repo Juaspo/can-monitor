@@ -63,10 +63,11 @@ class CanApplication():
         self.db = None
         self.can_interface = None
 
-    def set_can_port(self, bus):
+    def set_can_channel(self, bus):
         self.canbus_port = str(bus)
+        self.set_can_interface()
 
-    def get_can_port(self):
+    def get_can_channel(self):
         return self.canbus_port
 
     def set_can_interface(self):
@@ -95,7 +96,7 @@ class CanApplication():
         msg_2182 = self.db.get_message_by_name('EEC1')
 
         #print("printing msg 2192\n", msg_2182.signals)
-        can_bus = get_can_interface()
+        can_bus = self.get_can_interface()
 
         data_2182 = msg_2182.encode({'EngineSpeed':50.0})
         msg_send = self.create_msg(msg_2182.frame_id,data_2182)
@@ -129,7 +130,14 @@ class CanApplication():
             return None
         message = can_bus.recv()
         logger.info("Raw message received: %s", message)
-        logger.info("decoded msg:", self.db.decode_message(message.arbitration_id, message.data))
+        try:
+            decoded_message = self.db.decode_message(message.arbitration_id, message.data)
+            logger.info("msg id: [%s] msg data: [%s]", message.arbitration_id, message.data)
+            logger.info("decoded msg: %s", decoded_message)
+        except KeyError as e:
+            logger.warning("Did not found matching decoding parameter: %s", e)
+        except ValueError as e:
+            logger.warning("incorrect data received: %s", e)
 
         # message = can.Message(arbitration_id=example_message.frame_id, data=data)
         # can_bus.send(message)
