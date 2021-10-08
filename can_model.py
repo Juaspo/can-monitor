@@ -54,16 +54,26 @@ class ApplicationModel():
                     return item
 
 
+#############################################################
+
 class CanApplication():
     def __init__(self, logger, *args, **kwargs):
-        self.canbus = None
+        self.logger = logger
+        self.canbus_port = None
         self.db = None
+        self.can_interface = None
 
-    def set_canbus(self, bus):
-        self.canbus = str(bus)
+    def set_can_port(self, bus):
+        self.canbus_port = str(bus)
 
-    def get_canbus(self):
-        return self.canbus
+    def get_can_port(self):
+        return self.canbus_port
+
+    def set_can_interface(self):
+        self.can_interface = can.interface.Bus(str(self.canbus_port), bustype='socketcan')
+
+    def get_can_interface(self):
+        return self.can_interface
 
     def set_db(self, logger, db_path):
         if(os.path.exists(db_path)):
@@ -85,7 +95,7 @@ class CanApplication():
         msg_2182 = self.db.get_message_by_name('EEC1')
 
         #print("printing msg 2192\n", msg_2182.signals)
-        can_bus = can.interface.Bus(str(self.canbus), bustype='socketcan')
+        can_bus = get_can_interface()
 
         data_2182 = msg_2182.encode({'EngineSpeed':50.0})
         msg_send = self.create_msg(msg_2182.frame_id,data_2182)
@@ -112,10 +122,14 @@ class CanApplication():
         return db.decode_message(arb_id, can_data)
 
 
-    def receive_can(self):
+    def receive_can(self, logger):
+        can_bus = self.get_can_interface()
+        if can_bus is None:
+            logger.error("Can interface not setup")
+            return None
         message = can_bus.recv()
-        print("decoded msg:", db.decode_message(message.arbitration_id, message.data))
-        print("checkpoint0", task_2182)
+        logger.info("Raw message received: %s", message)
+        logger.info("decoded msg:", self.db.decode_message(message.arbitration_id, message.data))
 
         # message = can.Message(arbitration_id=example_message.frame_id, data=data)
         # can_bus.send(message)

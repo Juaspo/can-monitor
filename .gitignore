@@ -134,3 +134,5 @@ dbc_input.dbc
 motohawk.dbc
 
 myguiapp
+thread.py
+J1939-DBC/VCVCCU_J1939.dbc

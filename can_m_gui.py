@@ -104,12 +104,12 @@ class StartPage(tk.Frame): # Page example 1
 
         self.name_label = tk.Label(self.id_frame, text="CAN Name", font=LARGE_FONT)
         self.name_label.grid(row=1, column=0, sticky="w")
-        self.can_name_entry = tk.Entry(self.id_frame, width=20)
+        self.can_name_entry = tk.Entry(self.id_frame, width=23)
         self.can_name_entry.grid(row=1, column=1, sticky="w")
 
         self.label = tk.Label(self.id_frame, text="CAN Data", font=LARGE_FONT)
         self.label.grid(row=2, column=0, sticky="w")
-        self.can_entry = tk.Entry(self.id_frame, width=20)
+        self.can_entry = tk.Entry(self.id_frame, width=23)
         self.can_entry.grid(row=2, column=1, sticky="w")
 
         self.btn_frame = tk.Frame(self)
@@ -188,11 +188,12 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
                 label.grid(row=grid_r, column=0, sticky="w")
                 _temp_dict["title"] = label_title_var
 
-                label_value_var = tk.StringVar()
-                label_value_var.set(labels_to_build[lbl])
-                label = tk.Label(grid_frame, textvariable=label_value_var, font=MEDIUM_FONT)
+                entry_value_var = tk.StringVar()
+                entry_value_var.set(labels_to_build[lbl])
+                label = tk.Entry(grid_frame, textvariable=entry_value_var, 
+                                 width=23, font=MEDIUM_FONT, state='disabled')
                 label.grid(row=grid_r, column=1, sticky="w")
-                _temp_dict["value"] = label_value_var
+                _temp_dict["value"] = entry_value_var
                 logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
                 grid_r += 1
 

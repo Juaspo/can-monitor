@@ -18,6 +18,7 @@ import os
 import tkinter as tk
 import can_m_gui
 import can_model
+import threading
 
 
 @click.command()
@@ -37,8 +38,7 @@ def main(cfg_file: str, logging_level: str, dbc_file: str, ofile_path: str) -> i
 
     root = tk.Tk()
     root.withdraw()
-    can_controller = CanController(root, logger, cfg_file)
-
+    can_controller = CanController(root, logger, cfg_file) 
     root.mainloop()
     return 0
 
@@ -64,11 +64,10 @@ def create_logger(logging_level: str) -> Logger:
 class CanController():
     def __init__(self, root, logger, cfg_file, *arg, **kwargs):
         data_val = {"can_data": "New value!", "can_info": "new info!"}
-
+        self.logger = logger
         self.app_model = can_model.ApplicationModel(self, logger)
         self.can_control = can_model.CanApplication(self, logger)
-
-        self.can_control.set_canbus("can0")
+        self.can_control.set_can_port("can0")
 
         cfg_content = self.app_model.get_config(logger, cfg_file)
         if not cfg_content:
@@ -87,8 +86,15 @@ class CanController():
         widgets = self.can_gui.receive_widgets
         start_page = self.can_gui.pages["StartPage"]
 
-        # start_page.btn0.config(command = lambda: print("me"))
         start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
+        start_page.btn1.config(command = lambda: widgets["EngineSpeed"].update_values(logger, data_val))
+
+        x = threading.Thread(target=self.can_read, args=("CanMonitorThread", logger))
+        x.start()
+
+    def can_read(self, name, logger):
+        logger.debug("%s is running can monitor", name)
+        self.can_control.receive_can(logger)
 
     def update_widget(self, logger, widget):
         widgets["engine_speed"].update_values(logger, data_val)
