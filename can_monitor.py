@@ -10,15 +10,15 @@ __status__ = "development"
 
 
 import sys
-# import yaml
 import click
-import logging
-from logging import Logger
 import os
 import tkinter as tk
+import threading
+import logging
 import can_m_gui
 import can_model
-import threading
+import utils
+
 
 
 @click.command()
@@ -27,13 +27,19 @@ import threading
 @click.option('-l', '--logging_level', 'logging_level', default='DEBUG',
               help='''set logging severity DEBUG INFO WARNING ERROR CRITICAL
               Default INFO''')
+@click.option('-L', '--logging_cfg', 'logging_config',
+              help='''Use logging yaml config file to set logging configuration''')
 @click.option('-d', '--dbc', 'dbc_file', help='input .dbc file for encoding')
 @click.option('-o', '--output', 'ofile_path',
               help='set generated file destination. Default ./')
 
 
-def main(cfg_file: str, logging_level: str, dbc_file: str, ofile_path: str) -> int:
-    logger = create_logger(logging_level)
+def main(cfg_file: str, logging_level: str, logging_config:str, dbc_file: str, 
+         ofile_path: str) -> int:
+    util = utils.ApplicationUtils()
+    util.config_logger(logging_level, logging_config)
+
+    logger = logging.getLogger(__name__)
     logger.info("Logging level set to: %s", logging_level)
 
     root = tk.Tk()
@@ -42,57 +48,36 @@ def main(cfg_file: str, logging_level: str, dbc_file: str, ofile_path: str) -> i
     root.mainloop()
     return 0
 
-
-def create_logger(logging_level: str) -> Logger:
-    '''
-    Set up logger for this script
-    input:
-        logging_level :string
-    return:
-        logger :Logger
-    '''
-    logger = logging.getLogger(__name__)
-    logger.setLevel(getattr(logging, logging_level.upper(), 10))
-    formatter = logging.Formatter('%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                                  datefmt='%Y-%m-%d:%H:%M:%S')
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    return logger
-
-class CanController():
+class CanController(utils.ApplicationUtils):
     def __init__(self, root, logger, cfg_file, *arg, **kwargs):
         data_val = {"can_data": "New value!", "can_info": "new info!"}
-        self.logger = logger
-        self.app_model = can_model.ApplicationModel(self, logger)
-        self.can_control = can_model.CanApplication(self, logger)
-        self.can_control.set_can_channel("can0")
         self.threads = {}
 
-        cfg_content = self.app_model.get_config(logger, cfg_file)
+        self.can_control = can_model.CanApplication(self)
+        self.can_control.set_can_channel("can0")
+
+        cfg_content = {"can_data": "New value!", "can_info": "new info!"}
+        cfg_content = self.get_yaml_config(cfg_file)
         if not cfg_content:
             logger.error("missing config file, exiting...")
             sys.exit(os.EX_CONFIG)
 
-        dbc_path = self.app_model.get_config(logger, cfg_file, "dbc_file")
+        dbc_path = self.get_yaml_config(cfg_file, "dbc_file")
         if dbc_path:
-            self.can_control.set_db(logger, dbc_path)
+           self.can_control.set_db(dbc_path)
 
-        can_receive_cfg = self.app_model.deep_search(cfg_content, "can_receive")
+        can_receive_cfg = self.deep_search(cfg_content, "can_receive")
         logger.debug("receive cfg_file content:\n%s", can_receive_cfg)
 
-        self.can_gui = can_m_gui.MainApplication(root, logger, can_receive_cfg)
+        self.can_gui = can_m_gui.MainApplication(root, can_receive_cfg)
 
         widgets = self.can_gui.receive_widgets
         start_page = self.can_gui.pages["StartPage"]
 
-        # x = threading.Thread(target=self.can_read, args=("CanMonitorThread", logger))
-
         start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
-        start_page.btn1.config(command = lambda: self.start_thread(logger, "CanMonitorThread"))
+        start_page.btn1.config(command = lambda: self.start_thread("CanMonitorThread"))
 
-    def start_thread(self, logger, thread):
+    def start_thread(self, thread):
         create_new_thread = True
 
         if self.threads.get(thread):
@@ -102,28 +87,25 @@ class CanController():
                 # return threads[thread]
 
         if create_new_thread:
-            x_thread = threading.Thread(target=self.can_read, args=(thread, logger))
+            x_thread = threading.Thread(target=self.can_read, args=(thread))
             x_thread.start()
             self.threads[thread] = x_thread
             logger.debug("New thread '%s' created and started", thread)
             # return x_thread
-        
 
-
-    def can_read(self, name, logger):
+    def can_read(self, name):
         logger.debug("%s is running can monitor", name)
-        self.can_control.receive_can(logger)
+        self.can_control.receive_can()
 
-    def update_widget(self, logger, widget):
+    def update_widget(self, widget):
         widgets["engine_speed"].update_values(logger, data_val)
 
-    def fetch_entry_data(self, logger):
+    def fetch_entry_data(self):
         entry_data = None
         page = self.can_gui.pages["StartPage"]
         entry_data = page.get_entry_data()
         logger.info(entry_data)
 
-    # def update_widget(logger):
 
 
 if __name__ == "__main__":

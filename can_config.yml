@@ -16,6 +16,7 @@ config_groups:
       EngineSpeed:
         can_name: 'EEC1'
         can_id: '0CF004FE'
+        can_id_dec: 123456
         can_data:
         full_can: True
         show_arbid: "True"

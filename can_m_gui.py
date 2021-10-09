@@ -3,8 +3,10 @@
 # Use Tkinter for python 2, tkinter for python 3
 import tkinter as tk
 import logging
-from logging import Logger
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 LARGE_FONT = ("Consolas", 12)
 MEDIUM_FONT = ("Consolas", 10)
@@ -12,7 +14,7 @@ SMALL_FONT = ("Verdana", 8)
 
 
 class MainApplication(tk.Toplevel):
-    def __init__(self, master, logger, cfg_file, *args, **kwargs):
+    def __init__(self, master, cfg_file, *args, **kwargs):
         tk.Toplevel.__init__(self, master)
         # use protocol to catch window close and destroy application.
         self.protocol('WM_DELETE_WINDOW', self.master.destroy)
@@ -36,7 +38,7 @@ class MainApplication(tk.Toplevel):
         #     page.grid(row=0, column=0, sticky="nsew")
         #     # self.show_frame(F)
 
-        page = StartPage(container, self, logger)
+        page = StartPage(container, self)
         page.grid(row=0, column=0, sticky="nsew")
         self.pages["StartPage"] = page
         #self.pages["StartPage"].can_id_entry.insert('end', "Money") 
@@ -49,7 +51,7 @@ class MainApplication(tk.Toplevel):
 
         if cfg_file is not None:
             for k in cfg_file:
-                frame = CanReceiveWidget(self.receive_widget_frame, self, logger, k, cfg_file[k])
+                frame = CanReceiveWidget(self.receive_widget_frame, self, k, cfg_file[k])
                 self.receive_widgets[k] = frame
                 frame.pack()
                 # frame.grid(row=n, column=0, sticky="nsew")
@@ -87,7 +89,7 @@ class StartPage(tk.Frame): # Page example 1
     self. EX: tk.Label(self). Parent of this page is whatever is passed
     which in this case is container, see line: frame = F(container, self).
     '''
-    def __init__(self, parent, controller, logger):
+    def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, background="green") # create a local frame
 
         self.id_frame = tk.Frame(self)
@@ -145,7 +147,7 @@ class PageOne(tk.Frame): # Page example 2
 
 
 class CanReceiveWidget(tk.Frame): # Example to create multiple labels
-    def __init__(self, parent, controller, logger, widget_name="ReceiveWidget", labels_to_build=None):
+    def __init__(self, parent, controller, widget_name="ReceiveWidget", labels_to_build=None):
         tk.Frame.__init__(self, parent, background="light blue", borderwidth=1)
 
         '''
@@ -167,6 +169,7 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
         label_titles = {
                         "can_name": "CAN name:",
                         "can_id": "CAN ID:",
+                        "can_id_dec": "CAN ID dec:",
                         "can_data": "CAN data:",
                         "can_full": "CAN full:",
                         "can_info": "CAN info:"
@@ -199,7 +202,7 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
 
                 self.labels_entries[lbl] = _temp_dict
 
-    def update_values(self, logger, data_values):
+    def update_values(self, data_values):
         self.labels_entries
         keys = []
 
@@ -232,24 +235,6 @@ class LabelTwo(tk.Frame): # Example to create multiple labels (grey)
             label = tk.Label(self, text="Created in frame LabelTwo", font=LARGE_FONT)
             label.pack()
 
-def create_logger(logging_level: str) -> Logger:
-    '''
-    Set up logger for this script
-    input:
-        logging_level :string
-    return:
-        logger :Logger
-    '''
-    logger = logging.getLogger(__name__)
-    logger.setLevel(getattr(logging, logging_level.upper(), 10))
-    formatter = logging.Formatter('%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                                  datefmt='%Y-%m-%d:%H:%M:%S')
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    return logger
-
 if __name__ == '__main__':
     # Run app if started as main
     cfg_file = {"Test_data": {
@@ -259,9 +244,6 @@ if __name__ == '__main__':
                               "can_full": "0X00#998877665544332211",
                               }
                 }
-    logging_level = "DEBUG"
-    logger = create_logger(logging_level)
-    logger.info("Logging level set to: %s", logging_level)
 
-    app = MainApplication(logger, cfg_file)
+    app = MainApplication(cfg_file)
     app.mainloop()

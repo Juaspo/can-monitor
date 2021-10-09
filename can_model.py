@@ -1,67 +1,25 @@
 #!/usr/bin/env python3
-import yaml
 import re
 import cantools
 import can
-import logging
-from logging import Logger
 import os.path
+import logging
 
-class ApplicationModel():
-    def __init__(self, logger, *args, **kwargs):
-        pass
-
-    def get_config(self, logger, cfg_file: str, cfg_level="config_groups") -> dict:
-        '''
-        Fetch YAML configuration
-        reads and returns YAML configuration
-        input:
-            cfg_file :str
-        return:
-            dict
-        '''
-        try:
-            with open(cfg_file, 'r') as file:
-                cfg = yaml.safe_load(file)
-                # logger.debug("yaml content: %s", cfg)
-                return cfg[cfg_level]
-        except yaml.YAMLError as e:
-            logger.error(f"YAML file error: {e}")
-        except FileNotFoundError as e:
-            logger.error(f"config file error: {e}")
-        return False
-
-    def match_can_id(self, obj, can_id):
-        pass
-
-
-    def deep_search(self, obj, key):
-        '''
-        Search multiple levels of a dicts and return found key values
-
-        input:
-            obj: dict - Dictionary to search through
-            key: str - Matching key string value to look for
-        return:
-            item: dict - Value of matching dict key
-        '''
-
-        if key in obj: return obj[key]
-        for k, v in obj.items():
-            if isinstance(v,dict):
-                item = self.deep_search(v, key)
-                if item is not None:
-                    return item
-
-
-#############################################################
+logger = logging.getLogger(__name__)
 
 class CanApplication():
-    def __init__(self, logger, *args, **kwargs):
-        self.logger = logger
+    def __init__(self, *args, **kwargs):
         self.canbus_port = None
         self.db = None
         self.can_interface = None
+        self.callbacks = {}
+        self.can_message_count = 0
+
+    def reset_can_message_count(self):
+        self.can_message_count = 0
+
+    def add_can_message_count(self, n):
+        self.can_message_count += n
 
     def set_can_channel(self, bus):
         self.canbus_port = str(bus)
@@ -76,12 +34,13 @@ class CanApplication():
     def get_can_interface(self):
         return self.can_interface
 
-    def set_db(self, logger, db_path):
+    def set_db(self, db_path):
         if(os.path.exists(db_path)):
             self.db = cantools.database.load_file(db_path)
             logger.debug("updated db with '%s'", db_path)
         else:
             logger.error("no db file found at '%s'", db_path)
+            pass
 
     def send_can(self, arb_id: str, can_data: str):
         '''
@@ -104,7 +63,7 @@ class CanApplication():
 
         return 0
 
-    def get_db_object(self, logger, dbc_file_path: str):
+    def get_db_object(self, dbc_file_path: str):
         logger.debug(f"Using DBC file: %s", dbc_file_path)
         try:
             db = cantools.database.load_file(dbc_file_path)
@@ -114,16 +73,16 @@ class CanApplication():
         return None
 
 
-    def decode_can_msg(self, logger, arb_id: str, can_data: str, db: object = None, dbc_file_path: str = None ) -> dict:
+    def decode_can_msg(self, arb_id: str, can_data: str, db: object = None, dbc_file_path: str = None ) -> dict:
         if dbc_file_path is not None:
-            db = get_db_object(logger, dbc_file_path)   
+            db = get_db_object(dbc_file_path)   
         if db is None:
             raise ValueError ('Expected either db object or dbc_file path parameter')
             return None
         return db.decode_message(arb_id, can_data)
 
 
-    def receive_can(self, logger):
+    def receive_can(self):
         can_bus = self.get_can_interface()
         if can_bus is None:
             logger.error("Can interface not setup")
@@ -132,21 +91,27 @@ class CanApplication():
         logger.info("Raw message received: %s", message)
         try:
             decoded_message = self.db.decode_message(message.arbitration_id, message.data)
-            logger.info("msg id: [%s] msg data: [%s]", message.arbitration_id, message.data)
+            logger.info("msg id: [%s] msg data: [%s]", hex(message.arbitration_id), message.data)
             logger.info("decoded msg: %s", decoded_message)
         except KeyError as e:
-            logger.warning("Did not found matching decoding parameter: %s", e)
+            logger.warning("Did not find matching decoding parameter: %s", e)
         except ValueError as e:
             logger.warning("incorrect data received: %s", e)
 
         # message = can.Message(arbitration_id=example_message.frame_id, data=data)
         # can_bus.send(message)
 
+        delf.do_view_callback("receive_widget", message)
+
     def create_msg(self, frame_id, data_param):
         return can.Message(arbitration_id=frame_id, data=data_param)
 
-    def add_view_callback(self, func):
-        self.callback = func
+    def add_view_callback(self, name, func):
+        self.callbacks[name] = func
 
-    def do_view_callback(self, data):
-        func(data)
+    def do_view_callback(self, name, data):
+        if self.callbacks.get(name):
+            self.callbacks[name]
+            logger.debug("running %s callback method",  name)
+        else:
+            logger.warning("Callback method not found: %s", name)
