@@ -44,6 +44,7 @@ def main(cfg_file: str, logging_level: str, logging_config:str, dbc_file: str,
 
     root = tk.Tk()
     root.withdraw()
+
     can_controller = CanController(root, logger, cfg_file) 
     root.mainloop()
     return 0
@@ -71,6 +72,7 @@ class CanController(utils.ApplicationUtils):
         logger.debug("receive cfg_file content:\n%s", can_receive_cfg)
 
         self.can_gui = can_m_gui.MainApplication(root, can_receive_cfg)
+        self.can_gui.add_callback("exit", self.on_exit)
 
         widgets = self.can_gui.receive_widgets
         start_page = self.can_gui.pages["StartPage"]
@@ -103,14 +105,21 @@ class CanController(utils.ApplicationUtils):
         self.can_control.stop_receive_can()
         self.logger.info("Stopped can receive can")
 
-    def update_widget(self, widget):
-        widgets["engine_speed"].update_values(logger, data_val)
+    def update_widget(self, widget_name, data):
+
+        widgets[widget_name].update_values(logger, data_val)
 
     def fetch_entry_data(self):
         entry_data = None
         page = self.can_gui.pages["StartPage"]
         entry_data = page.get_entry_data()
         logger.info(entry_data)
+
+    def on_exit(self):
+        self.can_read_stop()
+        self.logger.debug("closing application")
+
+
 
 
 if __name__ == "__main__":

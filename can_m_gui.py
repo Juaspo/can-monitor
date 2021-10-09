@@ -2,6 +2,7 @@
 
 # Use Tkinter for python 2, tkinter for python 3
 import tkinter as tk
+from tkinter import messagebox
 import logging
 import sys
 import logging
@@ -17,7 +18,9 @@ class MainApplication(tk.Toplevel):
     def __init__(self, master, cfg_file, *args, **kwargs):
         tk.Toplevel.__init__(self, master)
         # use protocol to catch window close and destroy application.
-        self.protocol('WM_DELETE_WINDOW', self.master.destroy)
+        self.callbacks = {}
+        self.protocol('WM_DELETE_WINDOW', self.on_exit_callback)
+
         container = tk.Frame(self, background = "red")
         container.pack(side="top", fill="both", expand=True)
         
@@ -58,6 +61,18 @@ class MainApplication(tk.Toplevel):
 
         # data = {"widget": "enginge_speed", "can_data": "apple", "can_info": "pear"}
         # self.receive_widgets["engine_speed"].update_values(logger, data)
+
+    def add_callback(self, callback_name, func):
+        self.callbacks[callback_name] = func
+
+    def on_exit_callback(self):
+        if self.callbacks.get("exit") is None:
+            if messagebox.askokcancel("Close", "Are you sure...?"):
+                self.master.destroy()
+        else:
+            logger.info("running exit callback")
+            self.callbacks["exit"]()
+            self.master.destroy()
 
     def show_frame(self, cont):
         '''

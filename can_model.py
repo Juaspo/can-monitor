@@ -38,7 +38,10 @@ class CanApplication():
         return self.canbus_port
 
     def set_can_interface(self):
-        self.can_interface = can.interface.Bus(str(self.canbus_port), bustype='socketcan')
+        try:
+            self.can_interface = can.interface.Bus(str(self.canbus_port), bustype='socketcan')
+        except OSError as e:
+            logger.error("Could not set up can interface: %s", e)
 
     def get_can_interface(self):
         return self.can_interface
@@ -99,7 +102,9 @@ class CanApplication():
         if can_bus is None:
             logger.error("Can interface not setup")
             return None
-        while (self.run_can_receive):
+
+        message = None
+        while (self.run_can_receive and message is None):
             message = can_bus.recv(0.5)
 
         if message is None:
