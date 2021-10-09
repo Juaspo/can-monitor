@@ -77,6 +77,7 @@ class CanController(utils.ApplicationUtils):
 
         start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
         start_page.btn1.config(command = lambda: self.start_thread("CanMonitorThread"))
+        start_page.btn2.config(command = lambda: self.can_read_stop())
 
     def start_thread(self, thread_name):
         create_new_thread = True
@@ -97,6 +98,10 @@ class CanController(utils.ApplicationUtils):
     def can_read(self, name):
         self.logger.info("%s is running can monitor", name)
         self.can_control.receive_can()
+
+    def can_read_stop(self):
+        self.can_control.stop_receive_can()
+        self.logger.info("Stopped can receive can")
 
     def update_widget(self, widget):
         widgets["engine_speed"].update_values(logger, data_val)

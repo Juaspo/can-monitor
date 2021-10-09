@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+'''
+https://python-can.readthedocs.io/en/master/interfaces/socketcan.html
+'''
+
 import re
 import cantools
 import can
@@ -14,6 +19,10 @@ class CanApplication():
         self.can_interface = None
         self.callbacks = {}
         self.can_message_count = 0
+        self.run_can_receive = True
+
+    def stop_receive_can(self):
+        self.run_can_receive = False
 
     def reset_can_message_count(self):
         self.can_message_count = 0
@@ -83,22 +92,36 @@ class CanApplication():
 
 
     def receive_can(self):
+        self.run_can_receive = True
         can_bus = self.get_can_interface()
+        can_message = {}
+
         if can_bus is None:
             logger.error("Can interface not setup")
             return None
-        message = can_bus.recv()
-        logger.info("Raw message received: %s", message)
+        while (self.run_can_receive):
+            message = can_bus.recv(0.5)
+
+        if message is None:
+            logger.info("No messages received")
+            return None
+
+        logger.debug("Raw message received: %s", message)
+
+        can_message["id"] = message.arbitration_id
+        can_message["data"] = message.data
+
         try:
-            decoded_message = self.db.decode_message(message.arbitration_id, message.data)
-            logger.info("msg id: [%s] msg data: [%s]", hex(message.arbitration_id), message.data)
-            logger.info("decoded msg: %s", decoded_message)
+            can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
+            logger.info("msg id: [%s], msg data: [%s]", 
+                        hex(message.arbitration_id), message.data)
+            logger.info("decoded msg: %s", can_message["decoded"])
         except KeyError as e:
             logger.warning("Did not find matching decoding parameter: %s", e)
         except ValueError as e:
             logger.warning("incorrect data received: %s", e)
 
-        # delf.do_view_callback("receive_widget", message)
+        self.do_view_callback("receive_widget", message)
 
     def create_msg(self, frame_id, data_param):
         return can.Message(arbitration_id=frame_id, data=data_param)
@@ -109,6 +132,6 @@ class CanApplication():
     def do_view_callback(self, name, data):
         if self.callbacks.get(name):
             self.callbacks[name]
-            logger.debug("running %s callback method",  name)
+            logger.info("running %s callback method",  name)
         else:
             logger.warning("Callback method not found: %s", name)

@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 LARGE_FONT = ("Consolas", 12)
-MEDIUM_FONT = ("Consolas", 10)
+MEDIUM_FONT = ("Helvetica", 10)
 SMALL_FONT = ("Verdana", 8)
 
 
@@ -116,10 +116,12 @@ class StartPage(tk.Frame): # Page example 1
 
         self.btn_frame = tk.Frame(self)
         self.btn_frame.pack()
-        self.btn0 = tk.Button(self.btn_frame, text="send")
+        self.btn0 = tk.Button(self.btn_frame, text="send can")
         self.btn0.grid(row=0, column=0)
-        self.btn1 = tk.Button(self.btn_frame, text="next")
+        self.btn1 = tk.Button(self.btn_frame, text="read can")
         self.btn1.grid(row=0, column=1)
+        self.btn2 = tk.Button(self.btn_frame, text="stop can")
+        self.btn2.grid(row=0, column=2)
 
 
     def set_entry(self, text):
@@ -194,7 +196,8 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
                 entry_value_var = tk.StringVar()
                 entry_value_var.set(labels_to_build[lbl])
                 label = tk.Entry(grid_frame, textvariable=entry_value_var, 
-                                 width=23, font=MEDIUM_FONT, state='disabled')
+                                 width=23, font=MEDIUM_FONT, state='readonly',
+                                 bd=0,)
                 label.grid(row=grid_r, column=1, sticky="w")
                 _temp_dict["value"] = entry_value_var
                 logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
