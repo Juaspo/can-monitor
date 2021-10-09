@@ -51,6 +51,7 @@ def main(cfg_file: str, logging_level: str, logging_config:str, dbc_file: str,
 class CanController(utils.ApplicationUtils):
     def __init__(self, root, logger, cfg_file, *arg, **kwargs):
         data_val = {"can_data": "New value!", "can_info": "new info!"}
+        self.logger = logger
         self.threads = {}
 
         self.can_control = can_model.CanApplication(self)
@@ -77,24 +78,24 @@ class CanController(utils.ApplicationUtils):
         start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
         start_page.btn1.config(command = lambda: self.start_thread("CanMonitorThread"))
 
-    def start_thread(self, thread):
+    def start_thread(self, thread_name):
         create_new_thread = True
 
-        if self.threads.get(thread):
-            if self.threads[thread].isAlive():
+        if self.threads.get(thread_name):
+            if self.threads[thread_name].isAlive():
                 create_new_thread = False
-                logger.debug("%s thread is already running", thread)
-                # return threads[thread]
+                self.logger.info("%s thread is already running", thread_name)
+                # return threads[thread_name]
 
         if create_new_thread:
-            x_thread = threading.Thread(target=self.can_read, args=(thread))
+            x_thread = threading.Thread(target=self.can_read, args=(thread_name,))
             x_thread.start()
-            self.threads[thread] = x_thread
-            logger.debug("New thread '%s' created and started", thread)
+            self.threads[thread_name] = x_thread
+            self.logger.info("New thread '%s' created and started", thread_name)
             # return x_thread
 
     def can_read(self, name):
-        logger.debug("%s is running can monitor", name)
+        self.logger.info("%s is running can monitor", name)
         self.can_control.receive_can()
 
     def update_widget(self, widget):
@@ -105,7 +106,6 @@ class CanController(utils.ApplicationUtils):
         page = self.can_gui.pages["StartPage"]
         entry_data = page.get_entry_data()
         logger.info(entry_data)
-
 
 
 if __name__ == "__main__":

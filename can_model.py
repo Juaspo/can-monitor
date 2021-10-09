@@ -98,10 +98,7 @@ class CanApplication():
         except ValueError as e:
             logger.warning("incorrect data received: %s", e)
 
-        # message = can.Message(arbitration_id=example_message.frame_id, data=data)
-        # can_bus.send(message)
-
-        delf.do_view_callback("receive_widget", message)
+        # delf.do_view_callback("receive_widget", message)
 
     def create_msg(self, frame_id, data_param):
         return can.Message(arbitration_id=frame_id, data=data_param)
