@@ -113,8 +113,8 @@ class CanApplication():
 
         logger.debug("Raw message received: %s", message)
 
-        can_message["id"] = message.arbitration_id
-        can_message["data"] = message.data
+        can_message["can_id"] = message.arbitration_id
+        can_message["can_data"] = message.data
 
         try:
             can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
@@ -126,17 +126,20 @@ class CanApplication():
         except ValueError as e:
             logger.warning("incorrect data received: %s", e)
 
-        self.do_view_callback("receive_widget", message)
+        self.do_callback("received_can_data", can_message)
 
     def create_msg(self, frame_id, data_param):
         return can.Message(arbitration_id=frame_id, data=data_param)
 
-    def add_view_callback(self, name, func):
+    def add_callback(self, name, func):
         self.callbacks[name] = func
 
-    def do_view_callback(self, name, data):
+    def do_callback(self, name, data):
         if self.callbacks.get(name):
-            self.callbacks[name]
+            self.callbacks[name](data)
             logger.info("running %s callback method",  name)
         else:
             logger.warning("Callback method not found: %s", name)
+
+    
+

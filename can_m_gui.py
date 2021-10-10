@@ -9,8 +9,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-LARGE_FONT = ("Consolas", 12)
-MEDIUM_FONT = ("Helvetica", 10)
+LARGE_FONT = ("Helvetica", 12)
+MEDIUM_FONT = ("Consolas", 10)
 SMALL_FONT = ("Verdana", 8)
 
 
@@ -54,11 +54,18 @@ class MainApplication(tk.Toplevel):
 
         if cfg_file is not None:
             for k in cfg_file:
-                frame = CanReceiveWidget(self.receive_widget_frame, self, k, cfg_file[k])
-                self.receive_widgets[k] = frame
-                frame.pack()
-                # frame.grid(row=n, column=0, sticky="nsew")
+                try:
+                    dec_id = int(k, 0)
+                    widget_name = cfg_file[k].get("can_name", None)
+                    frame = CanReceiveWidget(self.receive_widget_frame,
+                                             k, widget_name, cfg_file[k])
+                    self.receive_widgets[dec_id] = frame
+                    frame.pack()
+                except ValueError as e:
+                    logger.error("Wrong format of HEX for %s: %s", k, e)
 
+                # frame.grid(row=n, column=0, sticky="nsew")
+        logger.info("widgets created: %s", self.receive_widgets)
         # data = {"widget": "enginge_speed", "can_data": "apple", "can_info": "pear"}
         # self.receive_widgets["engine_speed"].update_values(logger, data)
 
@@ -164,7 +171,7 @@ class PageOne(tk.Frame): # Page example 2
 
 
 class CanReceiveWidget(tk.Frame): # Example to create multiple labels
-    def __init__(self, parent, controller, widget_name="ReceiveWidget", labels_to_build=None):
+    def __init__(self, parent, can_id, widget_name=None, labels_to_build=None):
         tk.Frame.__init__(self, parent, background="light blue", borderwidth=1)
 
         '''
@@ -178,17 +185,23 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
             labels_to_build: dict
 
         '''
-        self.widget_name = tk.Label(self, text=widget_name, font=LARGE_FONT)
-        self.widget_name.pack(pady=5, padx=5)
+        self.widget_name = widget_name
+
+        if self.widget_name is None:
+            self.widget_name = "Recieve Widget"
+        widget_title_lbl = tk.Label(self, text=self.widget_name, font=LARGE_FONT)
+        widget_title_lbl.pack(pady=5, padx=5)
         grid_frame = tk.Frame(self, bg="light green")
         grid_frame.pack()
 
         label_titles = {
-                        "can_name": "CAN name:",
                         "can_id": "CAN ID:",
+                        "can_name": "CAN name:",
+                        "can_label": "CAN label:",
                         "can_id_dec": "CAN ID dec:",
+                        "can_value": "CAN value",
                         "can_data": "CAN data:",
-                        "can_full": "CAN full:",
+                        #"can_full": "CAN full:",
                         "can_info": "CAN info:"
         }
 
@@ -196,29 +209,37 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
         
         grid_r = grid_c = 0
         cfg_keys = label_titles.keys()
-
-        logger.debug("widget build data %s", labels_to_build)
+        # logger.debug("widget build data %s", labels_to_build)
 
         for lbl in labels_to_build:
             if lbl in cfg_keys:
                 _temp_dict = {}
                 label_title_var = tk.StringVar()
                 label_title_var.set(label_titles[lbl])
-                label = tk.Label(grid_frame, textvariable=label_title_var, font=MEDIUM_FONT)
-                label.grid(row=grid_r, column=0, sticky="w")
+                label = tk.Label(grid_frame, textvariable=label_title_var, 
+                                 width=10, font=MEDIUM_FONT, anchor='w')
+                label.grid(row=grid_r, column=0)
                 _temp_dict["title"] = label_title_var
 
                 entry_value_var = tk.StringVar()
-                entry_value_var.set(labels_to_build[lbl])
-                label = tk.Entry(grid_frame, textvariable=entry_value_var, 
-                                 width=23, font=MEDIUM_FONT, state='readonly',
+                if(lbl == "can_id" and labels_to_build[lbl]):
+                    entry_value_var.set(can_id)
+                elif(lbl == "can_id_dec" and labels_to_build[lbl]):
+
+                    entry_value_var.set(int(can_id, 0))
+                else:
+                    entry_value_var.set(labels_to_build[lbl])
+
+                entry = tk.Entry(grid_frame, textvariable=entry_value_var, 
+                                 width=24, font=MEDIUM_FONT, state='readonly',
                                  bd=0,)
-                label.grid(row=grid_r, column=1, sticky="w")
+                entry.grid(row=grid_r, column=1, sticky="w")
                 _temp_dict["value"] = entry_value_var
-                logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
+                # logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
                 grid_r += 1
 
                 self.labels_entries[lbl] = _temp_dict
+        # logger.debug(self.labels_entries)
 
     def update_values(self, data_values):
         self.labels_entries
@@ -227,15 +248,15 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
         for k in self.labels_entries:
             keys.append(k)
 
-        logger.debug("update values - keys: %s # data_values: %s # labels_entries: %s",
-                     keys, data_values, self.labels_entries)
+        # logger.debug("update values - keys: %s # data_values: %s # labels_entries: %s",
+        #              keys, data_values, self.labels_entries)
         for entry in data_values:
             if entry in keys:
                 logger.debug("found match on '%s' with value '%s'", entry, data_values[entry])
                 self.labels_entries[entry]["value"].set(data_values[entry])
             else:
                 logger.warning("[widget:%s] no '%s' object found to update", 
-                               self.widget_name.cget("text"), entry)
+                               self.widget_name, entry)
 
     def update_label(self, label, sub, data_val):
         frame = self.labels_dict[label]

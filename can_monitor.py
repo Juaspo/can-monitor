@@ -57,6 +57,7 @@ class CanController(utils.ApplicationUtils):
 
         self.can_control = can_model.CanApplication(self)
         self.can_control.set_can_channel("can0")
+        self.can_control.add_callback("received_can_data", self.update_widget_view)
 
         cfg_content = {"can_data": "New value!", "can_info": "new info!"}
         cfg_content = self.get_yaml_config(cfg_file)
@@ -74,7 +75,7 @@ class CanController(utils.ApplicationUtils):
         self.can_gui = can_m_gui.MainApplication(root, can_receive_cfg)
         self.can_gui.add_callback("exit", self.on_exit)
 
-        widgets = self.can_gui.receive_widgets
+        self.widgets = self.can_gui.receive_widgets
         start_page = self.can_gui.pages["StartPage"]
 
         start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
@@ -105,9 +106,25 @@ class CanController(utils.ApplicationUtils):
         self.can_control.stop_receive_can()
         self.logger.info("Stopped can receive can")
 
-    def update_widget(self, widget_name, data):
+    def update_widget_view(self, data):
+        # self.logger.debug(data)
+        new_dict = {}
+        # TODO requires python 3.8 for optional arg in hex()
+        # proper_hex = data["can_data"].hex(' ').upper()
 
-        widgets[widget_name].update_values(logger, data_val)
+        proper_hex = self.byte_to_hex(data["can_data"])
+        self.logger.info(proper_hex)
+
+        new_dict["can_data"] = proper_hex.upper()
+        if data.get("decoded"):
+            for k, v in data["decoded"].items():
+                new_dict["can_name"] = k
+                new_dict["can_value"] = v
+
+        # self.logger.debug(new_dict)
+        self.widgets[data["can_id"]].update_values(new_dict)
+
+
 
     def fetch_entry_data(self):
         entry_data = None
@@ -118,6 +135,21 @@ class CanController(utils.ApplicationUtils):
     def on_exit(self):
         self.can_read_stop()
         self.logger.debug("closing application")
+
+    # def get_name_from_id(self, cfg_file, arb_id):
+
+    #     cfg_file = self.deep_search(cfg_file, "can_widget_parameters")
+    #     for entry in cfg_file
+
+    # def get_id_dict(self, cfg_file, data):
+    #     can_id = None
+    #     new_dict = {}
+    #     sub_dict = {}
+
+    #     for entry in cfg_content:
+    #         can_id = cfg_file[entry]["can_id"]
+    #         for item in cfg_file[entry]:
+    #             sub_dict[item]
 
 
 

@@ -89,3 +89,9 @@ class ApplicationUtils():
                 item = self.deep_search(v, key)
                 if item is not None:
                     return item
+
+
+    def byte_to_hex(self, byte_array, separator = ' '):
+        logger.info(byte_array)
+        hex_result = " ".join(["{:02x}".format(x) for x in byte_array])
+        return hex_result

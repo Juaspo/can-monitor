@@ -13,18 +13,28 @@ config_groups:
         value: 100.0
 
     can_receive:
-      EngineSpeed:
-        can_id: '0CF004FE'
+      0X0CF004FE:
+        can_name: 'EngineSpeed'
+        can_id: True
         can_id_dec: True
-        can_name: 'EEC1'
+        can_label: 'EEC1'
         can_data:
+        can_value: 0
         full_can: True
         show_arbid: "True"
         can_info: "Engine speed shows"
 
-      EngineTemp:
-        can_id: '02332'
-        can_name: 'EET1'
+      0X0G332:
+        can_name: 'EngineTemp'
+        can_label: 'EET1'
+        can_data: '0x9988776655'
+        full_can: True
+        show_arbid: "True"
+        can_info: "Temp of engine"
+
+
+      0X02345:
+        can_label: 'TEST'
         can_data: '0x9988776655'
         full_can: True
         show_arbid: "True"
