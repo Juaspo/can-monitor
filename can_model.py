@@ -20,6 +20,7 @@ class CanApplication():
         self.callbacks = {}
         self.can_message_count = 0
         self.run_can_receive = True
+        self.dry_run = kwargs.get("dry", False)
 
     def stop_receive_can(self):
         self.run_can_receive = False
@@ -30,18 +31,24 @@ class CanApplication():
     def add_can_message_count(self, n):
         self.can_message_count += n
 
+    def get_can_message_count(self):
+        return self.can_message_count
+
     def set_can_channel(self, bus):
-        self.canbus_port = str(bus)
-        self.set_can_interface()
+        if self.dry_run:
+            logger.info("skipping canbus port setup due to dry mode")
+        else:
+            self.canbus_port = str(bus)
+            self.set_can_interface()
 
     def get_can_channel(self):
         return self.canbus_port
 
     def set_can_interface(self):
-        try:
+        if self.dry_run:
+            logger.info("Skipping can interface setup due to dry mode")
+        else:
             self.can_interface = can.interface.Bus(str(self.canbus_port), bustype='socketcan')
-        except OSError as e:
-            logger.error("Could not set up can interface: %s", e)
 
     def get_can_interface(self):
         return self.can_interface
@@ -98,35 +105,45 @@ class CanApplication():
         self.run_can_receive = True
         can_bus = self.get_can_interface()
         can_message = {}
+        msg_count = 0
 
         if can_bus is None:
             logger.error("Can interface not setup")
             return None
 
         message = None
-        while (self.run_can_receive and message is None):
+        while (self.run_can_receive):
             message = can_bus.recv(0.5)
 
-        if message is None:
-            logger.info("No messages received")
-            return None
+            if message is not None:
+                msg_count += 1
+                # logger.debug("Raw message received: %s", message)
 
-        logger.debug("Raw message received: %s", message)
+                try:
+                    can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
+                except KeyError as e:
+                    pass
 
-        can_message["can_id"] = message.arbitration_id
-        can_message["can_data"] = message.data
+                #TODO: Performance test to see limit of RPi
 
-        try:
-            can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
-            logger.info("msg id: [%s], msg data: [%s]", 
-                        hex(message.arbitration_id), message.data)
-            logger.info("decoded msg: %s", can_message["decoded"])
-        except KeyError as e:
-            logger.warning("Did not find matching decoding parameter: %s", e)
-        except ValueError as e:
-            logger.warning("incorrect data received: %s", e)
+                # can_message["can_id"] = message.arbitration_id
+                # can_message["can_data"] = message.data
 
-        self.do_callback("received_can_data", can_message)
+                # try:
+                #     can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
+                #     logger.info("msg id: [%s], msg data: [%s]", 
+                #                 hex(message.arbitration_id), message.data)
+                #     logger.info("decoded msg: %s", can_message["decoded"])
+                # except KeyError as e:
+                #     logger.warning("Did not find matching decoding parameter: %s", e)
+                # except ValueError as e:
+                #     logger.warning("incorrect data received: %s", e)
+
+                # self.do_callback("received_can_data", can_message)
+        
+        self.add_can_message_count(msg_count)
+        logger.info("Received %s can messages. Total message count is %s",
+                    msg_count, self.get_can_message_count())
 
     def create_msg(self, frame_id, data_param):
         return can.Message(arbitration_id=frame_id, data=data_param)

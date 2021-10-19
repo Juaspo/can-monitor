@@ -24,7 +24,7 @@ config_groups:
         show_arbid: "True"
         can_info: "Engine speed shows"
 
-      0X0G332:
+      0X0F332:
         can_name: 'EngineTemp'
         can_label: 'EET1'
         can_data: '0x9988776655'

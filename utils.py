@@ -92,6 +92,6 @@ class ApplicationUtils():
 
 
     def byte_to_hex(self, byte_array, separator = ' '):
-        logger.info(byte_array)
+        logger.debug(byte_array)
         hex_result = " ".join(["{:02x}".format(x) for x in byte_array])
         return hex_result

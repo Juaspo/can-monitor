@@ -140,10 +140,18 @@ class StartPage(tk.Frame): # Page example 1
         self.btn_frame.pack()
         self.btn0 = tk.Button(self.btn_frame, text="send can")
         self.btn0.grid(row=0, column=0)
-        self.btn1 = tk.Button(self.btn_frame, text="read can")
+        self.btn1 = tk.Button(self.btn_frame, text="start can")
         self.btn1.grid(row=0, column=1)
         self.btn2 = tk.Button(self.btn_frame, text="stop can")
         self.btn2.grid(row=0, column=2)
+
+        self.check_box_frame = tk.Frame(self)
+        self.check_box_frame.pack()
+        check0 = tk.Checkbutton(self.check_box_frame, text="Filter messages")
+        check0.grid(row=0, column=0)
+        check1 = tk.Checkbutton(self.check_box_frame, text="Continous run")
+        check1.grid(row=0, column=1)
+
 
 
     def set_entry(self, text):

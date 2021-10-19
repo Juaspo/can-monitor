@@ -29,33 +29,43 @@ import utils
               Default INFO''')
 @click.option('-L', '--logging_cfg', 'logging_config',
               help='''Use logging yaml config file to set logging configuration''')
-@click.option('-d', '--dbc', 'dbc_file', help='input .dbc file for encoding')
+@click.option('-D', '--dbc', 'dbc_file', help='input .dbc file for encoding')
+@click.option('-d', '--dry', 'dry_run', is_flag=True, default=False, 
+              help='input .dbc file for encoding')
 @click.option('-o', '--output', 'ofile_path',
               help='set generated file destination. Default ./')
 
 
 def main(cfg_file: str, logging_level: str, logging_config:str, dbc_file: str, 
-         ofile_path: str) -> int:
+         dry_run: bool, ofile_path: str) -> int:
     util = utils.ApplicationUtils()
     util.config_logger(logging_level, logging_config)
 
     logger = logging.getLogger(__name__)
     logger.info("Logging level set to: %s", logging_level)
 
+    if dry_run:
+        logger.info("Dry run mode. No active connection will be attempted")
+
     root = tk.Tk()
     root.withdraw()
 
-    can_controller = CanController(root, logger, cfg_file) 
+    can_controller = CanController(root, logger, cfg_file, **({"dry": dry_run})) 
     root.mainloop()
     return 0
 
 class CanController(utils.ApplicationUtils):
     def __init__(self, root, logger, cfg_file, *arg, **kwargs):
         data_val = {"can_data": "New value!", "can_info": "new info!"}
+        self.dry_run = False
+
+        self.dry_run = kwargs.get("dry", False)
+        logger.info("Dry mode: %s", self.dry_run)
+
         self.logger = logger
         self.threads = {}
 
-        self.can_control = can_model.CanApplication(self)
+        self.can_control = can_model.CanApplication(self, **({"dry": self.dry_run}))
         self.can_control.set_can_channel("can0")
         self.can_control.add_callback("received_can_data", self.update_widget_view)
 
@@ -112,19 +122,19 @@ class CanController(utils.ApplicationUtils):
         # TODO requires python 3.8 for optional arg in hex()
         # proper_hex = data["can_data"].hex(' ').upper()
 
-        proper_hex = self.byte_to_hex(data["can_data"])
-        self.logger.info(proper_hex)
-
-        new_dict["can_data"] = proper_hex.upper()
-        if data.get("decoded"):
-            for k, v in data["decoded"].items():
-                new_dict["can_name"] = k
-                new_dict["can_value"] = v
-
-        # self.logger.debug(new_dict)
-        self.widgets[data["can_id"]].update_values(new_dict)
+        if self.widgets.get(data["can_id"]):
+            self.logger.info("Found can id match: %s", data["can_id"])
+            proper_hex = self.byte_to_hex(data["can_data"])
 
 
+            new_dict["can_data"] = proper_hex.upper()
+            if data.get("decoded"):
+                for k, v in data["decoded"].items():
+                    new_dict["can_name"] = k
+                    new_dict["can_value"] = v
+
+            self.logger.debug("Received can %s", new_dict)
+            self.widgets[data["can_id"]].update_values(new_dict)
 
     def fetch_entry_data(self):
         entry_data = None
