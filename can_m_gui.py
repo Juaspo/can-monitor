@@ -21,7 +21,7 @@ class MainApplication(tk.Toplevel):
         self.callbacks = {}
         self.protocol('WM_DELETE_WINDOW', self.on_exit_callback)
 
-        container = tk.Frame(self, background = "red")
+        container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         
         '''
@@ -49,7 +49,7 @@ class MainApplication(tk.Toplevel):
         ######## Receive widgets
         self.receive_widgets = {}
         self.label_frames = {} # labellist
-        self.receive_widget_frame = tk.Frame(container, bg="pink")
+        self.receive_widget_frame = tk.Frame(container)
         self.receive_widget_frame.grid(row=0, column=1, sticky="nsew")
 
         if cfg_file is not None:
@@ -65,7 +65,7 @@ class MainApplication(tk.Toplevel):
                     logger.error("Wrong format of HEX for %s: %s", k, e)
 
                 # frame.grid(row=n, column=0, sticky="nsew")
-        logger.info("widgets created: %s", self.receive_widgets)
+        # logger.debug("widgets created: %s", self.receive_widgets)
         # data = {"widget": "enginge_speed", "can_data": "apple", "can_info": "pear"}
         # self.receive_widgets["engine_speed"].update_values(logger, data)
 
@@ -112,7 +112,7 @@ class StartPage(tk.Frame): # Page example 1
     which in this case is container, see line: frame = F(container, self).
     '''
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, background="green") # create a local frame
+        tk.Frame.__init__(self, parent) # create a local frame
 
         self.id_frame = tk.Frame(self)
         self.id_frame.grid_rowconfigure(0, weight=1)
@@ -145,13 +145,16 @@ class StartPage(tk.Frame): # Page example 1
         self.btn2 = tk.Button(self.btn_frame, text="stop can")
         self.btn2.grid(row=0, column=2)
 
+        self.filter_check = tk.BooleanVar()
+        self.filter_check.set(False)
+        self.continous_run = tk.BooleanVar()
+        self.continous_run.set(False)
         self.check_box_frame = tk.Frame(self)
         self.check_box_frame.pack()
-        check0 = tk.Checkbutton(self.check_box_frame, text="Filter messages")
-        check0.grid(row=0, column=0)
-        check1 = tk.Checkbutton(self.check_box_frame, text="Continous run")
-        check1.grid(row=0, column=1)
-
+        self.check0 = tk.Checkbutton(self.check_box_frame, variable=self.filter_check, text="Filter messages")
+        self.check0.grid(row=0, column=0)
+        self.check1 = tk.Checkbutton(self.check_box_frame, variable=self.continous_run, text="Continous run")
+        self.check1.grid(row=0, column=1)
 
 
     def set_entry(self, text):
@@ -170,7 +173,7 @@ class StartPage(tk.Frame): # Page example 1
 
 class PageOne(tk.Frame): # Page example 2
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, background="yellow")
+        tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Hello Earth", font=LARGE_FONT)
         label.pack(pady=10,padx=10)
 
@@ -180,7 +183,7 @@ class PageOne(tk.Frame): # Page example 2
 
 class CanReceiveWidget(tk.Frame): # Example to create multiple labels
     def __init__(self, parent, can_id, widget_name=None, labels_to_build=None):
-        tk.Frame.__init__(self, parent, background="light blue", borderwidth=1)
+        tk.Frame.__init__(self, parent, borderwidth=1)
 
         '''
         create widget for can data receieve.
@@ -199,7 +202,7 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
             self.widget_name = "Recieve Widget"
         widget_title_lbl = tk.Label(self, text=self.widget_name, font=LARGE_FONT)
         widget_title_lbl.pack(pady=5, padx=5)
-        grid_frame = tk.Frame(self, bg="light green")
+        grid_frame = tk.Frame(self)
         grid_frame.pack()
 
         label_titles = {
@@ -277,7 +280,7 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
 
 class LabelTwo(tk.Frame): # Example to create multiple labels (grey)
     def __init__(self, parent, controller, nr_of_labels):
-        tk.Frame.__init__(self, parent, background="grey")
+        tk.Frame.__init__(self, parent)
         for i in range(nr_of_labels):
             label = tk.Label(self, text="Created in frame LabelTwo", font=LARGE_FONT)
             label.pack()

@@ -47,11 +47,20 @@ class CanApplication():
     def set_can_interface(self):
         if self.dry_run:
             logger.info("Skipping can interface setup due to dry mode")
+            self.can_interface = None
         else:
             self.can_interface = can.interface.Bus(str(self.canbus_port), bustype='socketcan')
 
     def get_can_interface(self):
         return self.can_interface
+
+    def set_can_filters(self, filter_list=False):
+        if self.can_interface is not None:
+            #TODO: check if can_interface is correct
+            self.can_interface.set_filters(filter_list)
+            logger.info("filter set: %s", filter_list)
+        else:
+            logger.warning("No can_interface set. This may be due to dry run")
 
     def set_db(self, db_path):
         if(os.path.exists(db_path)):

@@ -91,6 +91,7 @@ class CanController(utils.ApplicationUtils):
         start_page.btn0.config(command = lambda: self.can_control.send_can("123", "998877"))
         start_page.btn1.config(command = lambda: self.start_thread("CanMonitorThread"))
         start_page.btn2.config(command = lambda: self.can_read_stop())
+        start_page.check0.config(command = lambda: self.prep_can_filter(start_page.filter_check.get()))
 
     def start_thread(self, thread_name):
         create_new_thread = True
@@ -115,6 +116,22 @@ class CanController(utils.ApplicationUtils):
     def can_read_stop(self):
         self.can_control.stop_receive_can()
         self.logger.info("Stopped can receive can")
+
+    def prep_can_filter(self, set_filter):
+        filter_list = []
+        filter_dict = {}
+        if set_filter:
+            for can_id in self.widgets:
+                filter_dict["can_id"] = can_id
+                filter_dict["can_mask"] = 255
+                # filter_dict["extended"] = False
+            filter_list.append(filter_dict)
+            self.logger.info("widgets: %s", filter_list)
+            self.can_control.set_can_filters(filter_list)
+        else:
+            self.can_control.set_can_filters(False)
+
+        self.logger.info("Set can filter %s", set_filter)
 
     def update_widget_view(self, data):
         # self.logger.debug(data)
