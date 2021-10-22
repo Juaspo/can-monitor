@@ -17,21 +17,24 @@ dbc_file: './J1939-DBC/J1939_demo.dbc'
 config_groups:
   can_widget_parameters:
     can_send:
-      0X0CF004FE:
-        can_name: 'EngineSpeed'
+      EngineSpeed:
         can_id: True
         can_label: 'EEC2'
         can_bus: 'can0'
         can_value: 100.0
         can_period: 100
 
-      0X0CF4FE:
+      EngineTemp:
         can_name: 'TestCan'
         can_id: True
         can_label: 'TEST1'
         can_bus: 'can0'
         can_value: 1234.0
-        can_period: 
+        can_period: 0
+        can_info: "Testing can"
+
+      EngineRPM:
+        get_can_info: True
 
     can_receive:
       0X0CF004FE:
