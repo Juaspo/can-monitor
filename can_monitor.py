@@ -79,7 +79,7 @@ class CanController(utils.ApplicationUtils):
         if dbc_path:
            self.can_control.set_db(dbc_path)
 
-        can_receive_cfg = self.deep_search(cfg_content, "can_receive")
+        can_receive_cfg = self.deep_search(cfg_content, "can_widget_parameters")
         logger.debug("receive cfg_file content:\n%s", can_receive_cfg)
 
         self.can_gui = can_m_gui.MainApplication(root, can_receive_cfg)

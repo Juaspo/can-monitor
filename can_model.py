@@ -60,7 +60,7 @@ class CanApplication():
             self.can_interface.set_filters(filter_list)
             logger.info("filter set: %s", filter_list)
         else:
-            logger.warning("No can_interface set. This may be due to dry run")
+            logger.warning("'can_interface' not set. This may be due to dry run")
 
     def set_db(self, db_path):
         if(os.path.exists(db_path)):

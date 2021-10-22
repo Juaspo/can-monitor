@@ -46,28 +46,50 @@ class MainApplication(tk.Toplevel):
         self.pages["StartPage"] = page
         #self.pages["StartPage"].can_id_entry.insert('end', "Money") 
 
+        ########## Send widgets
+        self.send_widgets = {}
+        self.send_widget_frame = tk.Frame(container)
+        self.send_widget_frame.grid(row=0, column=1, sticky="nsew")
+
+        self.create_widgets(cfg_file["can_send"], self.send_widget_frame, "send", self.send_widgets)
+
         ######## Receive widgets
         self.receive_widgets = {}
-        self.label_frames = {} # labellist
         self.receive_widget_frame = tk.Frame(container)
-        self.receive_widget_frame.grid(row=0, column=1, sticky="nsew")
+        self.receive_widget_frame.grid(row=0, column=2, sticky="nsew")
 
-        if cfg_file is not None:
+        self.create_widgets(cfg_file["can_receive"], self.receive_widget_frame, "receive", self.receive_widgets)
+
+        logger.info("contents of send widget dicts: %s", self.send_widgets)
+        logger.info("contents of rece widget dicts: %s", self.receive_widgets)
+
+    def create_widgets(self, cfg_file, widget_frame, widget_type, add_to_dict=None):
+        # logger.debug("cfg in create widget: %s", cfg_file)
+        widgets_to_run = {"send": CanSendWidget,
+                          "receive": CanReceiveWidget
+                          }
+        if cfg_file is not None and widgets_to_run.get(widget_type, None):
             for k in cfg_file:
+                # logger.debug(k)
                 try:
                     dec_id = int(k, 0)
                     widget_name = cfg_file[k].get("can_name", None)
-                    frame = CanReceiveWidget(self.receive_widget_frame,
+                    frame = widgets_to_run[widget_type](widget_frame,
                                              k, widget_name, cfg_file[k])
-                    self.receive_widgets[dec_id] = frame
                     frame.pack()
+                    add_to_dict[dec_id] = frame
                 except ValueError as e:
                     logger.error("Wrong format of HEX for %s: %s", k, e)
 
+            return add_to_dict
+        else:
+            logger.error("Wrong widget type [%s] or config [%s] sent to create_widgets",
+                         widget_type, cfg_file)
                 # frame.grid(row=n, column=0, sticky="nsew")
         # logger.debug("widgets created: %s", self.receive_widgets)
         # data = {"widget": "enginge_speed", "can_data": "apple", "can_info": "pear"}
         # self.receive_widgets["engine_speed"].update_values(logger, data)
+
 
     def add_callback(self, callback_name, func):
         self.callbacks[callback_name] = func
@@ -277,6 +299,106 @@ class CanReceiveWidget(tk.Frame): # Example to create multiple labels
             if val == "data":
                 frame["value"].set(data_val[val])
 
+
+class CanSendWidget(tk.Frame): # Example to create multiple labels
+    def __init__(self, parent, can_id, widget_name=None, labels_to_build=None):
+        tk.Frame.__init__(self, parent, borderwidth=1)
+
+        '''
+        create widget for can data receieve.
+
+        input:
+            parent: frame
+            logger: Logger
+            controller: Parent object
+            widget_name: str
+            labels_to_build: dict
+
+        '''
+        self.widget_name = widget_name
+
+        if self.widget_name is None:
+            self.widget_name = "Recieve Widget"
+        widget_title_lbl = tk.Label(self, text=self.widget_name, font=LARGE_FONT)
+        widget_title_lbl.pack(pady=5, padx=5)
+        grid_frame = tk.Frame(self)
+        grid_frame.pack()
+
+        label_titles = {
+                        "can_name": "CAN name:",
+                        "can_id": "CAN ID:",
+                        "can_id_dec": "CAN ID dec:",
+                        "can_label": "CAN label:",
+                        "can_value": "CAN value",
+                        "can_data": "CAN data:",
+                        #"can_full": "CAN full:",
+                        "can_info": "CAN info:",
+                        "can_period": "Delay(ms)"
+        }
+
+        self.labels_entries = {}
+        
+        grid_r = grid_c = 0
+        cfg_keys = label_titles.keys()
+        # logger.debug("widget build data %s", labels_to_build)
+        if labels_to_build.get("get_can", False):
+            logger.info("Fetching CAN info")
+
+        for lbl in labels_to_build:
+            if lbl in cfg_keys:
+                _temp_dict = {}
+                label_title_var = tk.StringVar()
+                label_title_var.set(label_titles[lbl])
+                label = tk.Label(grid_frame, textvariable=label_title_var, 
+                                 width=10, font=MEDIUM_FONT, anchor='w')
+                label.grid(row=grid_r, column=0)
+                _temp_dict["title"] = label_title_var
+
+                entry_value_var = tk.StringVar()
+                if(lbl == "can_id" and labels_to_build[lbl]):
+                    entry_value_var.set(can_id)
+                elif(lbl == "can_id_dec" and labels_to_build[lbl]):
+                    entry_value_var.set(int(can_id, 0))
+                else:
+                    entry_value_var.set(labels_to_build[lbl])
+
+                entry = tk.Entry(grid_frame, textvariable=entry_value_var, 
+                                 width=24, font=MEDIUM_FONT, bd=0,
+                                 )
+                if lbl == "can_id" or lbl == "can_id_dec":
+                    entry.config(state='readonly')
+                entry.grid(row=grid_r, column=1, sticky="w")
+                _temp_dict["value"] = entry_value_var
+                # logger.debug("created %s [%s %s]",lbl, label_titles[lbl], labels_to_build[lbl])
+                grid_r += 1
+
+                self.labels_entries[lbl] = _temp_dict
+        # logger.debug(self.labels_entries)
+
+    def update_values(self, data_values):
+        self.labels_entries
+        keys = []
+
+        for k in self.labels_entries:
+            keys.append(k)
+
+        # logger.debug("update values - keys: %s # data_values: %s # labels_entries: %s",
+        #              keys, data_values, self.labels_entries)
+        for entry in data_values:
+            if entry in keys:
+                logger.debug("found match on '%s' with value '%s'", entry, data_values[entry])
+                self.labels_entries[entry]["value"].set(data_values[entry])
+            else:
+                logger.warning("[widget:%s] no '%s' object found to update", 
+                               self.widget_name, entry)
+
+    def update_label(self, label, sub, data_val):
+        frame = self.labels_dict[label]
+        # frame = self.frames[CanReceiveWidget]
+        print("In update label")
+        for val in data_val:
+            if val == "data":
+                frame["value"].set(data_val[val])
 
 class LabelTwo(tk.Frame): # Example to create multiple labels (grey)
     def __init__(self, parent, controller, nr_of_labels):
