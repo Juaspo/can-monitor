@@ -54,6 +54,24 @@ class CanApplication():
     def get_can_interface(self):
         return self.can_interface
 
+    def get_can_by_name(self, can_name):
+        can_message = {}
+        if self.db is None:
+            logger.error("no DBC file loaded")
+            return None
+
+        try:
+            result = self.db.get_message_by_name(can_name)
+            can_message["can_id"] = result.frame_id
+            can_message["can_name"] = result.name
+            can_message["can_info"] = result.comment
+            can_message["can_period"] = result.cycle_time
+        except KeyError as e:
+            logger.warning("No data found for %s in dbc file. %s", can_name, e)
+            return None
+
+        return can_message
+
     def set_can_filters(self, filter_list=False):
         if self.can_interface is not None:
             #TODO: check if can_interface is correct
@@ -79,7 +97,7 @@ class CanApplication():
             int
         '''
         # db = cantools.database.load_file('./J1939-DBC/J1939_demo.dbc')
-        print("#### ")
+        print("#### Send CAN message")
         msg_2182 = self.db.get_message_by_name('EEC1')
 
         #print("printing msg 2192\n", msg_2182.signals)
@@ -87,7 +105,11 @@ class CanApplication():
 
         data_2182 = msg_2182.encode({'EngineSpeed':50.0})
         msg_send = self.create_msg(msg_2182.frame_id,data_2182)
-        task_2182 = can_bus.send(msg_send)
+        
+        if self.dry_run:
+            logger.info("Dry run mode so no message will be sent")
+        else:
+            task_2182 = can_bus.send(msg_send)
 
         return 0
 
@@ -148,7 +170,7 @@ class CanApplication():
                 # except ValueError as e:
                 #     logger.warning("incorrect data received: %s", e)
 
-                # self.do_callback("received_can_data", can_message)
+                # self.do_callback("update_receive_widget_view", can_message)
         
         self.add_can_message_count(msg_count)
         logger.info("Received %s can messages. Total message count is %s",
@@ -163,7 +185,7 @@ class CanApplication():
     def do_callback(self, name, data):
         if self.callbacks.get(name):
             self.callbacks[name](data)
-            logger.info("running %s callback method",  name)
+            logger.debug("running %s callback method",  name)
         else:
             logger.warning("Callback method not found: %s", name)
 

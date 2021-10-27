@@ -325,6 +325,8 @@ class CanSendWidget(tk.Frame): # Example to create multiple labels
         if widget_name is None:
             logger.error("'can_name' is None. 'can_name' required for 'can_send' config")
             return None
+        else:
+            self.widget_name = widget_name
 
         widget_title_lbl = tk.Label(self, text=widget_name, font=LARGE_FONT)
         widget_title_lbl.pack(pady=5, padx=5)
@@ -346,7 +348,7 @@ class CanSendWidget(tk.Frame): # Example to create multiple labels
         self.labels_entries = {}
 
         grid_r = grid_c = 0
-        cfg_keys = label_titles.keys()
+        self.cfg_keys = label_titles.keys()
         # logger.debug("widget build data %s", labels_to_build)
         if labels_to_build.get("get_can", False):
             logger.info("Fetching CAN info")
@@ -362,7 +364,7 @@ class CanSendWidget(tk.Frame): # Example to create multiple labels
 
             entry_value_var = tk.StringVar()
             entry = tk.Entry(grid_frame, textvariable=entry_value_var, 
-                             width=24, font=MEDIUM_FONT, bd=0,
+                             width=35, font=MEDIUM_FONT, bd=0,
                              )
             entry.grid(row=grid_r, column=1, sticky="w")
             _temp_dict["value"] = entry_value_var
@@ -374,7 +376,7 @@ class CanSendWidget(tk.Frame): # Example to create multiple labels
             pass
         else:
             for post in labels_to_build:
-                if post in cfg_keys:
+                if post in self.cfg_keys:
                     self.labels_entries[post]["value"].set(labels_to_build[post])
 
 
@@ -382,16 +384,13 @@ class CanSendWidget(tk.Frame): # Example to create multiple labels
 
     def update_values(self, data_values):
         self.labels_entries
-        keys = []
-
-        for k in self.labels_entries:
-            keys.append(k)
+        keys = self.cfg_keys
 
         # logger.debug("update values - keys: %s # data_values: %s # labels_entries: %s",
         #              keys, data_values, self.labels_entries)
         for entry in data_values:
             if entry in keys:
-                logger.debug("found match on '%s' with value '%s'", entry, data_values[entry])
+                logger.info("found match on '%s' with value '%s'", entry, data_values[entry])
                 self.labels_entries[entry]["value"].set(data_values[entry])
             else:
                 logger.warning("[widget:%s] no '%s' object found to update", 
@@ -400,7 +399,6 @@ class CanSendWidget(tk.Frame): # Example to create multiple labels
     def update_label(self, label, sub, data_val):
         frame = self.labels_dict[label]
         # frame = self.frames[CanReceiveWidget]
-        print("In update label")
         for val in data_val:
             if val == "data":
                 frame["value"].set(data_val[val])
