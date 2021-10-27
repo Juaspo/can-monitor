@@ -157,20 +157,20 @@ class CanApplication():
 
                 #TODO: Performance test to see limit of RPi
 
-                # can_message["can_id"] = message.arbitration_id
-                # can_message["can_data"] = message.data
+                can_message["can_id"] = message.arbitration_id
+                can_message["can_data"] = message.data
 
-                # try:
-                #     can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
-                #     logger.info("msg id: [%s], msg data: [%s]", 
-                #                 hex(message.arbitration_id), message.data)
-                #     logger.info("decoded msg: %s", can_message["decoded"])
-                # except KeyError as e:
-                #     logger.warning("Did not find matching decoding parameter: %s", e)
-                # except ValueError as e:
-                #     logger.warning("incorrect data received: %s", e)
+                try:
+                    can_message["decoded"] = self.db.decode_message(message.arbitration_id, message.data)
+                    logger.info("msg id: [%s], msg data: [%s]", 
+                                hex(message.arbitration_id), message.data)
+                    logger.info("decoded msg: %s", can_message["decoded"])
+                except KeyError as e:
+                    logger.warning("Did not find matching decoding parameter: %s", e)
+                except ValueError as e:
+                    logger.warning("incorrect data received: %s", e)
 
-                # self.do_callback("update_receive_widget_view", can_message)
+                self.do_callback("update_receive_widget_view", can_message)
         
         self.add_can_message_count(msg_count)
         logger.info("Received %s can messages. Total message count is %s",
